@@ -197,9 +197,10 @@ func main() {
 
 	columns := []table.Column{
 		{Title: "ID", Width: 20},
-		{Title: "Container Name", Width: 40},
+		{Title: "Container", Width: 40},
 		{Title: "Image", Width: 40},
 		{Title: "Port", Width: 40},
+		{Title: "Status", Width: 30},
 	}
 
 	rowsItems := []table.Row{}
@@ -210,7 +211,18 @@ func main() {
 			port = fmt.Sprintf("http://%s:%d", "localhost", c.Ports[0].PublicPort)
 		}
 
-		item := []string{c.ID, c.Name, c.Image, port}
+		up := "\u2191"
+		greenUpArrow := "\033[32m" + up + "\033[0m"
+
+		downArrow := "\u2193"
+		redDownArrow := "\033[31m" + downArrow + "\033[0m"
+
+		currState := redDownArrow + " " + c.State
+		if c.State == "running" {
+			currState = greenUpArrow + " " + c.State
+		}
+
+		item := []string{c.ID, c.Name, c.Image, port, currState}
 		rowsItems = append(rowsItems, item)
 	}
 
