@@ -22,6 +22,7 @@ type model struct {
 	viewport   viewport.Model
 	textinput  textinput.Model
 	showDetail bool
+	showSearch bool
 }
 
 func (m model) Init() tea.Cmd {
@@ -36,34 +37,61 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-
+			t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, ""))
 			return model{
-				table:      m.table,
+				table:      t,
 				viewport:   m.viewport,
+				textinput:  m.textinput,
 				showDetail: false,
 			}, tea.ClearScreen
 
-		case "q", "ctrl+c":
+		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			container, err := dockerClient.GetContainerByName(m.table.SelectedRow()[1])
-			if err != nil {
-				panic(err)
+			if m.showSearch {
+				value := m.textinput.Value()
+				t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, value))
+
+				return model{
+					table:      t,
+					textinput:  m.textinput,
+					showDetail: false,
+					showSearch: false,
+				}, tea.ClearScreen
+
+			} else {
+				container, err := dockerClient.GetContainerByName(m.table.SelectedRow()[1])
+				if err != nil {
+					panic(err)
+				}
+
+				v, _ := models.NewViewport(utils.GetContent(container, utils.CreateTable))
+
+				return model{
+					table:      m.table,
+					textinput:  m.textinput,
+					viewport:   v,
+					showDetail: true,
+					showSearch: false,
+				}, tea.ClearScreen
+
 			}
 
-			v, _ := models.NewViewport(utils.GetContent(container, utils.CreateTable))
-
+		case "ctrl+f":
+			m.textinput.SetValue("")
 			return model{
 				table:      m.table,
-				viewport:   v,
-				showDetail: true,
+				viewport:   m.viewport,
+				textinput:  m.textinput,
+				showDetail: false,
+				showSearch: true,
 			}, tea.ClearScreen
-
 		}
 	}
 
 	m.table, _ = m.table.Update(msg)
-	m.viewport, cmd = m.viewport.Update(msg)
+	m.viewport, _ = m.viewport.Update(msg)
+	m.textinput, cmd = m.textinput.Update(msg)
 	return m, cmd
 }
 
@@ -72,6 +100,14 @@ var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 func (m model) View() string {
+	if m.showSearch {
+		return fmt.Sprintf(
+			"Search container by name\n\n%s\n\n%s",
+			m.textinput.View(),
+			"(esc to quit)",
+		) + "\n"
+	}
+
 	if m.showDetail {
 		return m.viewport.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
 	}
@@ -80,6 +116,7 @@ func (m model) View() string {
 }
 
 var dockerClient *docker.Docker
+var containerList []docker.MyContainer
 
 func main() {
 	ctx := context.Background()
@@ -89,47 +126,16 @@ func main() {
 		panic(err)
 	}
 
-	containerList, err := dockerClient.ContainerList()
+	containerList, err = dockerClient.ContainerList()
 	if err != nil {
 		panic(err)
 	}
 
-	columns := []table.Column{
-		{Title: "ID", Width: 20},
-		{Title: "Container", Width: 40},
-		{Title: "Image", Width: 40},
-		{Title: "Port", Width: 40},
-		{Title: "Status", Width: 30},
-	}
-
-	rowsItems := []table.Row{}
-
-	for _, c := range containerList {
-		port := ""
-		if len(c.Ports) > 0 {
-			port = fmt.Sprintf("http://%s:%d", "localhost", c.Ports[0].PublicPort)
-		}
-
-		up := "\u2191"
-		greenUpArrow := "\033[32m" + up + "\033[0m"
-
-		downArrow := "\u2193"
-		redDownArrow := "\033[31m" + downArrow + "\033[0m"
-
-		currState := redDownArrow + " " + c.State
-		if c.State == "running" {
-			currState = greenUpArrow + " " + c.State
-		}
-
-		item := []string{c.ID, c.Name, c.Image, port, currState}
-		rowsItems = append(rowsItems, item)
-	}
-
-	rows := rowsItems
-	t := models.NewTable(columns, rows)
+	t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, ""))
 
 	m := model{
-		table: t,
+		table:     t,
+		textinput: models.NewTextInput(),
 	}
 
 	if _, err := tea.NewProgram(m).Run(); err != nil {

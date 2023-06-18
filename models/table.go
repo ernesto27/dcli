@@ -1,6 +1,10 @@
 package models
 
 import (
+	"dockerniceui/docker"
+	"fmt"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -27,4 +31,53 @@ func NewTable(columns []table.Column, rows []table.Row) table.Model {
 	t.SetStyles(s)
 
 	return t
+}
+
+func GetContainerColumns() []table.Column {
+	return []table.Column{
+		{Title: "ID", Width: 20},
+		{Title: "Container", Width: 40},
+		{Title: "Image", Width: 40},
+		{Title: "Port", Width: 40},
+		{Title: "Status", Width: 30},
+	}
+}
+
+// TODO ADD TEST
+func GetContainerRows(containerList []docker.MyContainer, query string) []table.Row {
+	var filtered []docker.MyContainer
+	if query == "" {
+		filtered = containerList
+	} else {
+		for _, container := range containerList {
+			if strings.Contains(strings.ToLower(container.Name), strings.ToLower(query)) || strings.Contains(strings.ToLower(container.Image), strings.ToLower(query)) {
+				filtered = append(filtered, container)
+			}
+		}
+	}
+
+	rowsItems := []table.Row{}
+
+	for _, c := range filtered {
+		port := ""
+		if len(c.Ports) > 0 {
+			port = fmt.Sprintf("http://%s:%d", "localhost", c.Ports[0].PublicPort)
+		}
+
+		up := "\u2191"
+		greenUpArrow := "\033[32m" + up + "\033[0m"
+
+		downArrow := "\u2193"
+		redDownArrow := "\033[31m" + downArrow + "\033[0m"
+
+		currState := redDownArrow + " " + c.State
+		if c.State == "running" {
+			currState = greenUpArrow + " " + c.State
+		}
+
+		item := []string{c.ID, c.Name, c.Image, port, currState}
+		rowsItems = append(rowsItems, item)
+	}
+
+	return rowsItems
 }
