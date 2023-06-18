@@ -18,6 +18,12 @@ type Docker struct {
 	Containers []MyContainer
 }
 
+type MyNetwork struct {
+	Name      string
+	IPAddress string
+	Gateway   string
+}
+
 type MyContainer struct {
 	ID         string
 	IDShort    string
@@ -29,6 +35,9 @@ type MyContainer struct {
 	Status     string
 	Ports      []types.Port
 	Size       string
+	Command    string
+	Env        []string
+	Network    MyNetwork
 }
 
 func New(ctx context.Context) (*Docker, error) {
@@ -77,6 +86,7 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 		fmt.Printf("%+v\n", c)
 
 		cJSON, _, err := d.cli.ContainerInspectWithRaw(d.ctx, c.ID, true)
+
 		if err != nil {
 			continue
 		}
@@ -85,6 +95,14 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 		if len(c.Names) > 0 {
 			name = c.Names[0][1:]
 		}
+
+		networkSettings := cJSON.NetworkSettings
+
+		// Print the container's network information
+		networkMode := string(cJSON.HostConfig.NetworkMode)
+		fmt.Printf("Name: %s\n", networkMode)
+		fmt.Printf("Gateway: %s\n", networkSettings.Gateway)
+		fmt.Printf("IP: %s\n", networkSettings.IPAddress)
 
 		mc = append(mc, MyContainer{
 			ID:         c.ID,
@@ -97,6 +115,12 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 			Status:     c.Status,
 			Ports:      c.Ports,
 			Size:       formatSize(*cJSON.SizeRootFs),
+			Env:        cJSON.Config.Env,
+			Network: MyNetwork{
+				Name:      networkMode,
+				IPAddress: networkSettings.IPAddress,
+				Gateway:   networkSettings.Gateway,
+			},
 		})
 
 		d.Containers = mc

@@ -25,7 +25,13 @@ func createTable(title string, columns []string, rows [][]string) string {
 
 	table += "|\n"
 
-	table += "| ------------- |:-------------:		|\n"
+	table += "| ------------- | ------------- "
+
+	if len(columns) > 2 {
+		table += "| -------------"
+	}
+
+	table += "|\n"
 
 	for _, row := range rows {
 		for _, column := range row {
@@ -51,45 +57,32 @@ func getContent(container docker.MyContainer) string {
 		})
 
 	response += "\n\n---\n\n"
+	rows := [][]string{}
+	rows = append(rows, []string{"Command", container.Command})
+
+	for _, env := range container.Env {
+		rows = append(rows, []string{"ENV", env})
+	}
+
+	response += createTable("# Container detail", []string{"Type", "Value"}, rows)
+
+	response += "\n\n---\n\n"
+	response += createTable("# Networking", []string{"Network", "IP Address", "Gateway"}, [][]string{
+		{container.Network.Name, container.Network.IPAddress, container.Network.Gateway},
+	})
 
 	return response
 
 }
-
-const content = `
-# Container status
-
-
----	
-
-# Container detail
-
-| TYPE          |  VALUE           		|
-| ------------- |:-------------:		|
-| CMD  			| dasdds   			|
-| Entrypoint      	| shorturl-backend-1|
-| ENV      		| running   		|
-
----	
-
-# Newtworking
-| Network          |  IP Address    | Gateway
-| ------------- |:-------------:		|
-| ID  			| dasdds   			|
-| Name      	| shorturl-backend-1|
-| Status      	| running   		|
-| Created      	| running   		|
-
-`
 
 type myViewport struct {
 	viewport viewport.Model
 }
 
 func newViewport(content string) (*myViewport, error) {
-	const width = 90
+	const width = 120
 
-	vp := viewport.New(width, 30)
+	vp := viewport.New(width, 40)
 	vp.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
@@ -201,7 +194,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// os.Exit(0)
 
 	columns := []table.Column{
 		{Title: "ID", Width: 20},
