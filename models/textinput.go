@@ -6,7 +6,7 @@ import (
 
 func NewTextInput() textinput.Model {
 	ti := textinput.New()
-	ti.Placeholder = "Pikachu"
+	ti.Placeholder = ""
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20

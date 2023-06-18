@@ -1,6 +1,10 @@
 package utils
 
-import "dockerniceui/docker"
+import (
+	"dockerniceui/docker"
+	"fmt"
+	"strings"
+)
 
 type createTableFunc func(string, []string, [][]string) string
 
@@ -59,6 +63,26 @@ func GetContent(container docker.MyContainer, createTable createTableFunc) strin
 		{container.Network.Name, container.Network.IPAddress, container.Network.Gateway},
 	})
 
-	return response
+	response += "\n\n---\n\n"
 
+	response += "# Docker hub image url \n " + GetDockerHubURL(container.Image)
+
+	return response
+}
+
+func GetDockerHubURL(image string) string {
+	imageParts := strings.Split(image, ":")
+	image = ""
+	pathDefault := "_"
+	if len(imageParts) > 0 {
+		image = imageParts[0]
+	}
+
+	if strings.Contains(image, "/") {
+		pathDefault = "r"
+	}
+
+	dockerHubLink := fmt.Sprintf("https://hub.docker.com/%s/%s", pathDefault, image)
+
+	return dockerHubLink
 }

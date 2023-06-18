@@ -104,7 +104,7 @@ func (m model) View() string {
 		return fmt.Sprintf(
 			"Search container by name\n\n%s\n\n%s",
 			m.textinput.View(),
-			"(esc to quit)",
+			"(esc to back)",
 		) + "\n"
 	}
 
