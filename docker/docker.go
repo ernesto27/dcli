@@ -83,7 +83,7 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 	mc := []MyContainer{}
 	for _, c := range containers {
 		// print struct with nice format
-		fmt.Printf("%+v\n", c)
+		// fmt.Printf("%+v\n", c)
 
 		cJSON, _, err := d.cli.ContainerInspectWithRaw(d.ctx, c.ID, true)
 
@@ -199,6 +199,7 @@ func (d *Docker) ContainerLogs(containerId string) ([]string, error) {
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     false,
+		Timestamps: true,
 	})
 
 	if err != nil {
@@ -215,7 +216,20 @@ func (d *Docker) ContainerLogs(containerId string) ([]string, error) {
 		response = append(response, line)
 	}
 
+	reverseLines(response)
+
 	return response, nil
+}
+
+func reverseLines(lines []string) {
+	i := 0
+	j := len(lines) - 1
+
+	for i < j {
+		lines[i], lines[j] = lines[j], lines[i]
+		i++
+		j--
+	}
 }
 
 func trimValue(s string, max int) string {
