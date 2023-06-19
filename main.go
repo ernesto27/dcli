@@ -16,7 +16,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
+var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#9999FF")).Render
 
 type currentView int
 
@@ -35,14 +35,15 @@ type LogsView struct {
 }
 
 type model struct {
-	table       table.Model
-	viewport    viewport.Model
-	textinput   textinput.Model
-	logsView    LogsView
-	optionsView models.Options
-	ready       bool
-	currentView currentView
-	ContainerID string
+	table         table.Model
+	viewport      viewport.Model
+	textinput     textinput.Model
+	logsView      LogsView
+	optionsView   models.Options
+	ready         bool
+	currentView   currentView
+	ContainerID   string
+	dockerVersion string
 }
 
 func (m model) Init() tea.Cmd {
@@ -58,9 +59,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, ""))
 			return model{
-				table:       t,
+				table:       m.table,
 				viewport:    m.viewport,
 				textinput:   m.textinput,
 				currentView: ListContainer,
@@ -215,7 +215,7 @@ var baseStyle = lipgloss.NewStyle().
 func (m model) View() string {
 	switch m.currentView {
 	case ListContainer:
-		return baseStyle.Render(m.table.View()) + helpStyle("\n  ↑/↓: Navigate • Ctrl/C: Exit • Ctrl/F: Search • Ctrl/L: Logs container \n")
+		return baseStyle.Render(m.table.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n\n ↑/↓: Navigate • Ctrl/C: Exit • Ctrl/F: Search • Ctrl/L: Logs container \n")
 	case DetailContainer:
 		return m.viewport.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
 	case SearchContainer:
@@ -248,10 +248,16 @@ func main() {
 		panic(err)
 	}
 
+	version, err := dockerClient.ServerVersion()
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	m := model{
-		table:       getTableWithData(),
-		textinput:   models.NewTextInput(),
-		currentView: ListContainer,
+		table:         getTableWithData(),
+		textinput:     models.NewTextInput(),
+		currentView:   ListContainer,
+		dockerVersion: version,
 	}
 
 	if _, err := tea.NewProgram(
