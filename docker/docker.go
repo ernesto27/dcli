@@ -194,16 +194,17 @@ func (d *Docker) ContainerRestart(containerID string) error {
 	return d.cli.ContainerRestart(d.ctx, containerID, container.StopOptions{})
 }
 
-func (d *Docker) ContainerLogs(containerId string) ([]string, error) {
+func (d *Docker) ContainerLogs(containerId string) (string, error) {
 	out, err := d.cli.ContainerLogs(d.ctx, containerId, types.ContainerLogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     false,
 		Timestamps: true,
+		Tail:       "800",
 	})
 
 	if err != nil {
-		return []string{}, err
+		return "", err
 	}
 
 	defer out.Close()
@@ -218,7 +219,12 @@ func (d *Docker) ContainerLogs(containerId string) ([]string, error) {
 
 	reverseLines(response)
 
-	return response, nil
+	logs := ""
+	for _, l := range response {
+		logs += l[10:] + "\n"
+	}
+
+	return logs, nil
 }
 
 func reverseLines(lines []string) {

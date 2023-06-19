@@ -17,11 +17,17 @@ import (
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
+type LogsView struct {
+	pager     viewport.Model
+	container string
+	image     string
+}
+
 type model struct {
 	table      table.Model
 	viewport   viewport.Model
 	textinput  textinput.Model
-	pager      viewport.Model
+	logsView   LogsView
 	showDetail bool
 	showSearch bool
 	showLogs   bool
@@ -74,7 +80,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return model{
 					table:      m.table,
 					textinput:  m.textinput,
-					pager:      m.pager,
+					logsView:   m.logsView,
 					viewport:   v,
 					showDetail: true,
 					showLogs:   false,
@@ -94,25 +100,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}, tea.ClearScreen
 
 		case "ctrl+l":
-			containerLogs, err := dockerClient.ContainerLogs("d2d611f2646f")
+			containerLogs, err := dockerClient.ContainerLogs(m.table.SelectedRow()[0])
 			if err != nil {
 				panic(err)
 			}
-			for _, l := range containerLogs {
-				logs += l + "\n"
+
+			headerHeight := lipgloss.Height(models.HeaderView(m.logsView.pager, m.table.SelectedRow()[1]))
+			p := models.NewPager(widthScreen, heightScreen, containerLogs, headerHeight)
+
+			lv := LogsView{
+				pager:     p,
+				container: m.table.SelectedRow()[1],
+				image:     m.table.SelectedRow()[2],
 			}
-
-			headerHeight := lipgloss.Height(models.HeaderView(m.pager, ""))
-			p := viewport.New(widthScreen, heigthScreen)
-
-			p.YPosition = headerHeight + 1
-			p.SetContent(logs)
 
 			return model{
 				table:      m.table,
 				viewport:   m.viewport,
 				textinput:  m.textinput,
-				pager:      p,
+				logsView:   lv,
 				showDetail: false,
 				showSearch: false,
 				showLogs:   true,
@@ -121,19 +127,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		headerHeight := lipgloss.Height(models.HeaderView(m.pager, ""))
-		footerHeight := lipgloss.Height(models.FooterView(m.pager))
+		headerHeight := lipgloss.Height(models.HeaderView(m.logsView.pager, ""))
+		footerHeight := lipgloss.Height(models.FooterView(m.logsView.pager))
 		verticalMarginHeight := headerHeight + footerHeight
 
 		if !m.ready {
 			widthScreen = msg.Width
-			heigthScreen = msg.Height - verticalMarginHeight
-			m.pager.YPosition = headerHeight
+			heightScreen = msg.Height - verticalMarginHeight
+			m.logsView.pager.YPosition = headerHeight
 			m.ready = true
-			m.pager.YPosition = headerHeight + 1
+			m.logsView.pager.YPosition = headerHeight + 1
 		} else {
-			m.pager.Width = msg.Width
-			m.pager.Height = msg.Height - verticalMarginHeight
+			m.logsView.pager.Width = msg.Width
+			m.logsView.pager.Height = msg.Height - verticalMarginHeight
 		}
 
 	}
@@ -141,7 +147,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.table, _ = m.table.Update(msg)
 	m.viewport, _ = m.viewport.Update(msg)
 	m.textinput, _ = m.textinput.Update(msg)
-	m.pager, cmd = m.pager.Update(msg)
+	m.logsView.pager, cmd = m.logsView.pager.Update(msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
@@ -164,17 +170,16 @@ func (m model) View() string {
 	}
 
 	if m.showLogs {
-		return fmt.Sprintf("%s\n%s\n%s", models.HeaderView(m.pager, "container name - image name"), m.pager.View(), models.FooterView(m.pager))
+		return fmt.Sprintf("%s\n%s\n%s", models.HeaderView(m.logsView.pager, m.logsView.container+" - "+m.logsView.image), m.logsView.pager.View(), models.FooterView(m.logsView.pager))
 	}
 
-	return baseStyle.Render(m.table.View()) + helpStyle("\n  ↑/↓: Navigate • Ctrl/c: Exit • Ctrl/f: Search \n")
+	return baseStyle.Render(m.table.View()) + helpStyle("\n  ↑/↓: Navigate • Ctrl/C: Exit • Ctrl/F: Search • Ctrl/L: Logs container \n")
 }
 
 var dockerClient *docker.Docker
 var containerList []docker.MyContainer
-var logs string
 var widthScreen int
-var heigthScreen int
+var heightScreen int
 
 func main() {
 	ctx := context.Background()
@@ -198,7 +203,6 @@ func main() {
 	if _, err := tea.NewProgram(
 		m,
 		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
 	).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
