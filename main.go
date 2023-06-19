@@ -7,6 +7,7 @@ import (
 	"dockerniceui/utils"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -41,6 +42,7 @@ type model struct {
 	optionsView models.Options
 	ready       bool
 	currentView currentView
+	ContainerID string
 }
 
 func (m model) Init() tea.Cmd {
@@ -76,10 +78,39 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					textinput: m.textinput,
 				}, tea.ClearScreen
 
+			} else if m.currentView == OptionsContainer {
+				switch m.optionsView.Choices[m.optionsView.Cursor] {
+				case models.Stop:
+					err := dockerClient.ContainerStop(m.ContainerID)
+					if err != nil {
+						fmt.Println(err)
+					}
+					time.Sleep(1 * time.Second)
+				case models.Start:
+					err := dockerClient.ContainerStart(m.ContainerID)
+					if err != nil {
+						fmt.Println(err)
+					}
+				case models.Remove:
+					err := dockerClient.ContainerRemove(m.ContainerID)
+					if err != nil {
+						fmt.Println(err)
+					}
+				}
+
+				t := getTableWithData()
+				return model{
+					table:       t,
+					textinput:   m.textinput,
+					logsView:    m.logsView,
+					viewport:    m.viewport,
+					currentView: ListContainer,
+				}, tea.ClearScreen
+
 			} else {
 				container, err := dockerClient.GetContainerByName(m.table.SelectedRow()[1])
 				if err != nil {
-					panic(err)
+					fmt.Println(err)
 				}
 
 				v, _ := models.NewViewport(utils.GetContent(container, utils.CreateTable))
@@ -127,7 +158,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}, tea.ClearScreen
 
 		case "ctrl+o":
-			ov := models.NewOptions()
+			ov := models.NewOptions(m.table.SelectedRow()[1], m.table.SelectedRow()[2])
 			return model{
 				table:       m.table,
 				viewport:    m.viewport,
@@ -135,6 +166,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				logsView:    m.logsView,
 				optionsView: ov,
 				currentView: OptionsContainer,
+				ContainerID: m.table.SelectedRow()[0],
 			}, tea.ClearScreen
 
 		case "down", "j":
@@ -216,14 +248,8 @@ func main() {
 		panic(err)
 	}
 
-	containerList, err = dockerClient.ContainerList()
-	if err != nil {
-		panic(err)
-	}
-
-	t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, ""))
 	m := model{
-		table:       t,
+		table:       getTableWithData(),
 		textinput:   models.NewTextInput(),
 		currentView: ListContainer,
 	}
@@ -235,4 +261,15 @@ func main() {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
+}
+
+func getTableWithData() table.Model {
+	containerList, err := dockerClient.ContainerList()
+	// TODO FIX
+	if err != nil {
+		panic(err)
+	}
+
+	t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, ""))
+	return t
 }

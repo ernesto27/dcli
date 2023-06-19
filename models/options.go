@@ -1,22 +1,36 @@
 package models
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Options struct {
-	Cursor  int
-	Choice  string
-	Choices []string
+	Cursor    int
+	Choice    string
+	Choices   []string
+	Container string
+	Image     string
 }
 
-func NewOptions() Options {
+const (
+	Stop   = "Stop"
+	Start  = "Start"
+	Remove = "Remove"
+)
+
+func NewOptions(container string, image string) Options {
 	return Options{
-		Choices: []string{"Stop", "Start", "Remove"},
+		Choices:   []string{Stop, Start, Remove},
+		Container: container,
+		Image:     image,
 	}
 }
 
 func (o Options) View() string {
 	s := strings.Builder{}
-	s.WriteString("Options container [CONTAINER NAME]?\n\n")
+	options := fmt.Sprintf("Options container: %s - %s \n\n", o.Container, o.Image)
+	s.WriteString(options)
 
 	for i := 0; i < len(o.Choices); i++ {
 		if o.Cursor == i {
@@ -27,7 +41,7 @@ func (o Options) View() string {
 		s.WriteString(o.Choices[i])
 		s.WriteString("\n")
 	}
-	s.WriteString("\n(press q to quit)\n")
+	s.WriteString("\n(press Esc to go back)\n")
 
 	return s.String()
 }
