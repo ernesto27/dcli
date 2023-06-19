@@ -12,14 +12,14 @@ func TestGetDockerHubURL(t *testing.T) {
 		want string
 	}{
 		{
-			name: "official image format",
+			name: "should get official image format",
 			args: args{
 				image: "nginx",
 			},
 			want: "https://hub.docker.com/_/nginx",
 		},
 		{
-			name: "Other image format",
+			name: "should get other image format",
 			args: args{
 				image: "someuser/nameimage",
 			},

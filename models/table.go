@@ -9,6 +9,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const (
+	running = "running"
+	exited  = "exited"
+)
+
 func NewTable(columns []table.Column, rows []table.Row) table.Model {
 	t := table.New(
 		table.WithColumns(columns),
@@ -71,7 +76,7 @@ func GetContainerRows(containerList []docker.MyContainer, query string) []table.
 		redDownArrow := "\033[31m" + downArrow + "\033[0m"
 
 		currState := redDownArrow + " " + c.State
-		if c.State == "running" {
+		if c.State == running {
 			currState = greenUpArrow + " " + c.State
 		}
 
