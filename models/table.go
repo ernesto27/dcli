@@ -41,10 +41,11 @@ func NewTable(columns []table.Column, rows []table.Row) table.Model {
 func GetContainerColumns() []table.Column {
 	return []table.Column{
 		{Title: "ID", Width: 20},
-		{Title: "Container", Width: 40},
-		{Title: "Image", Width: 40},
-		{Title: "Port", Width: 40},
-		{Title: "Status", Width: 30},
+		{Title: "Container", Width: 30},
+		{Title: "Image", Width: 30},
+		{Title: "Port", Width: 20},
+		{Title: "Size", Width: 20},
+		{Title: "Status", Width: 20},
 	}
 }
 
@@ -80,7 +81,7 @@ func GetContainerRows(containerList []docker.MyContainer, query string) []table.
 			currState = greenUpArrow + " " + c.State
 		}
 
-		item := []string{c.ID, c.Name, c.Image, port, currState}
+		item := []string{c.ID, c.Name, c.Image, port, c.Size, currState}
 		rowsItems = append(rowsItems, item)
 	}
 
