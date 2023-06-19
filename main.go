@@ -17,6 +17,16 @@ import (
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
+type currentView int
+
+const (
+	ListContainer currentView = iota
+	DetailContainer
+	SearchContainer
+	LogsContainer
+	OptionsContainer
+)
+
 type LogsView struct {
 	pager     viewport.Model
 	container string
@@ -24,14 +34,13 @@ type LogsView struct {
 }
 
 type model struct {
-	table      table.Model
-	viewport   viewport.Model
-	textinput  textinput.Model
-	logsView   LogsView
-	showDetail bool
-	showSearch bool
-	showLogs   bool
-	ready      bool
+	table       table.Model
+	viewport    viewport.Model
+	textinput   textinput.Model
+	logsView    LogsView
+	optionsView models.Options
+	ready       bool
+	currentView currentView
 }
 
 func (m model) Init() tea.Cmd {
@@ -49,24 +58,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "esc":
 			t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, ""))
 			return model{
-				table:      t,
-				viewport:   m.viewport,
-				textinput:  m.textinput,
-				showDetail: false,
+				table:       t,
+				viewport:    m.viewport,
+				textinput:   m.textinput,
+				currentView: ListContainer,
 			}, tea.ClearScreen
 
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			if m.showSearch {
+			if m.currentView == SearchContainer {
 				value := m.textinput.Value()
 				t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, value))
 
 				return model{
-					table:      t,
-					textinput:  m.textinput,
-					showDetail: false,
-					showSearch: false,
+					table:     t,
+					textinput: m.textinput,
 				}, tea.ClearScreen
 
 			} else {
@@ -78,13 +85,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				v, _ := models.NewViewport(utils.GetContent(container, utils.CreateTable))
 
 				return model{
-					table:      m.table,
-					textinput:  m.textinput,
-					logsView:   m.logsView,
-					viewport:   v,
-					showDetail: true,
-					showLogs:   false,
-					showSearch: false,
+					table:       m.table,
+					textinput:   m.textinput,
+					logsView:    m.logsView,
+					viewport:    v,
+					currentView: DetailContainer,
 				}, tea.ClearScreen
 
 			}
@@ -92,11 +97,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+f":
 			m.textinput.SetValue("")
 			return model{
-				table:      m.table,
-				viewport:   m.viewport,
-				textinput:  m.textinput,
-				showDetail: false,
-				showSearch: true,
+				table:       m.table,
+				viewport:    m.viewport,
+				textinput:   m.textinput,
+				currentView: SearchContainer,
 			}, tea.ClearScreen
 
 		case "ctrl+l":
@@ -115,15 +119,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			return model{
-				table:      m.table,
-				viewport:   m.viewport,
-				textinput:  m.textinput,
-				logsView:   lv,
-				showDetail: false,
-				showSearch: false,
-				showLogs:   true,
+				table:       m.table,
+				viewport:    m.viewport,
+				textinput:   m.textinput,
+				logsView:    lv,
+				currentView: LogsContainer,
 			}, tea.ClearScreen
 
+		case "ctrl+o":
+			ov := models.NewOptions()
+			return model{
+				table:       m.table,
+				viewport:    m.viewport,
+				textinput:   m.textinput,
+				logsView:    m.logsView,
+				optionsView: ov,
+				currentView: OptionsContainer,
+			}, tea.ClearScreen
+
+		case "down", "j":
+			m.optionsView.Cursor++
+			if m.optionsView.Cursor >= len(m.optionsView.Choices) {
+				m.optionsView.Cursor = 0
+			}
+
+		case "up", "k":
+			m.optionsView.Cursor--
+			if m.optionsView.Cursor < 0 {
+				m.optionsView.Cursor = len(m.optionsView.Choices) - 1
+			}
 		}
 
 	case tea.WindowSizeMsg:
@@ -157,23 +181,26 @@ var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 func (m model) View() string {
-	if m.showSearch {
+	switch m.currentView {
+	case ListContainer:
+		return baseStyle.Render(m.table.View()) + helpStyle("\n  ↑/↓: Navigate • Ctrl/C: Exit • Ctrl/F: Search • Ctrl/L: Logs container \n")
+	case DetailContainer:
+		return m.viewport.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
+	case SearchContainer:
 		return fmt.Sprintf(
 			"Search container by name\n\n%s\n\n%s",
 			m.textinput.View(),
 			"(esc to back)",
 		) + "\n"
-	}
-
-	if m.showDetail {
-		return m.viewport.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
-	}
-
-	if m.showLogs {
+	case LogsContainer:
 		return fmt.Sprintf("%s\n%s\n%s", models.HeaderView(m.logsView.pager, m.logsView.container+" - "+m.logsView.image), m.logsView.pager.View(), models.FooterView(m.logsView.pager))
+	case OptionsContainer:
+		return m.optionsView.View()
+	default:
+		return ""
+
 	}
 
-	return baseStyle.Render(m.table.View()) + helpStyle("\n  ↑/↓: Navigate • Ctrl/C: Exit • Ctrl/F: Search • Ctrl/L: Logs container \n")
 }
 
 var dockerClient *docker.Docker
@@ -196,8 +223,9 @@ func main() {
 
 	t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, ""))
 	m := model{
-		table:     t,
-		textinput: models.NewTextInput(),
+		table:       t,
+		textinput:   models.NewTextInput(),
+		currentView: ListContainer,
 	}
 
 	if _, err := tea.NewProgram(
