@@ -161,6 +161,8 @@ func (d *Docker) ImageList() ([]types.ImageSummary, error) {
 		image.ID = trimValue(image.ID, 10)
 		if len(image.RepoTags) > 0 {
 			image.RepoTags[0] = trimValue(image.RepoTags[0], 40)
+		} else {
+			image.RepoTags = []string{"<none>"}
 		}
 		images[index] = image
 	}

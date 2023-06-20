@@ -50,7 +50,6 @@ func GetContainerColumns() []table.Column {
 	}
 }
 
-// TODO ADD TEST
 func GetContainerRows(containerList []docker.MyContainer, query string) []table.Row {
 	var filtered []docker.MyContainer
 	if query == "" {
@@ -66,14 +65,7 @@ func GetContainerRows(containerList []docker.MyContainer, query string) []table.
 	rowsItems := []table.Row{}
 
 	sort.SliceStable(filtered, func(i, j int) bool {
-		state1 := filtered[i].State
-		state2 := filtered[j].State
-
-		if state1 == running && state2 != running {
-			return true
-		} else {
-			return false
-		}
+		return filtered[i].State > filtered[j].State
 	})
 
 	for _, c := range filtered {

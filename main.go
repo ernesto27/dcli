@@ -27,6 +27,7 @@ const (
 	SearchContainer
 	LogsContainer
 	OptionsContainer
+	ListImage
 )
 
 type LogsView struct {
@@ -41,6 +42,7 @@ type model struct {
 	textinput     textinput.Model
 	logsView      LogsView
 	optionsView   models.Options
+	imageTable    table.Model
 	ready         bool
 	currentView   currentView
 	ContainerID   string
@@ -174,6 +176,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+e":
 			return m, attachToContainer(m.table.SelectedRow()[0])
+
+		case "ctrl+b":
+			images, err := dockerClient.ImageList()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			m.imageTable = models.NewImageTable(models.GetImageRows(images, ""))
+			m.currentView = ListImage
+			return m, tea.ClearScreen
 		}
 
 	case attachExited:
@@ -202,6 +214,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.table, _ = m.table.Update(msg)
 	m.viewport, _ = m.viewport.Update(msg)
 	m.textinput, _ = m.textinput.Update(msg)
+	m.imageTable, _ = m.imageTable.Update(msg)
 	m.logsView.pager, cmd = m.logsView.pager.Update(msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -231,6 +244,7 @@ func (m model) View() string {
 	commands := `
  GENERAL ↑/↓: Navigate • Ctrl/C: Exit • Esc: Back 
  CONTAINERS Ctrl/F: Search • Ctrl/L: Logs • Ctrl/O: Options • Ctrl/E: Attach cmd
+ IMAGES Ctrl/B: List
 	`
 
 	switch m.currentView {
@@ -248,6 +262,9 @@ func (m model) View() string {
 		return fmt.Sprintf("%s\n%s\n%s", models.HeaderView(m.logsView.pager, m.logsView.container+" - "+m.logsView.image), m.logsView.pager.View(), models.FooterView(m.logsView.pager))
 	case OptionsContainer:
 		return m.optionsView.View()
+
+	case ListImage:
+		return baseStyle.Render(m.imageTable.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
 	default:
 		return ""
 
