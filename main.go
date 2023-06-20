@@ -185,8 +185,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+e":
 			// TODO CHECK IF CONTAINER IS RUNNING OR COMMAND NOT EXISTED
+
 			return m, attachToContainer(m.table.SelectedRow()[0])
 		}
+
+	case attachExited:
 
 	case tea.WindowSizeMsg:
 		headerHeight := lipgloss.Height(models.HeaderView(m.logsView.pager, ""))
@@ -241,9 +244,13 @@ func (m model) View() string {
 
 }
 
+type attachExited struct{ err error }
+
 func attachToContainer(ID string) tea.Cmd {
 	c := exec.Command("docker", "exec", "-it", ID, "bin/bash")
-	return tea.ExecProcess(c, nil)
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		return attachExited{err}
+	})
 }
 
 var dockerClient *docker.Docker
