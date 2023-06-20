@@ -45,6 +45,7 @@ type model struct {
 	currentView   currentView
 	ContainerID   string
 	dockerVersion string
+	err           error
 }
 
 func (m model) Init() tea.Cmd {
@@ -61,53 +62,52 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return model{
-				table:       m.table,
-				viewport:    m.viewport,
-				textinput:   m.textinput,
-				currentView: ListContainer,
-			}, tea.ClearScreen
+			m.err = nil
+			t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(dockerClient.Containers, ""))
+			m.table = t
+			m.currentView = ListContainer
+			return m, tea.ClearScreen
 
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
 			if m.currentView == SearchContainer {
 				value := m.textinput.Value()
-				t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, value))
-
-				return model{
-					table:     t,
-					textinput: m.textinput,
-				}, tea.ClearScreen
+				t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(dockerClient.Containers, value))
+				m.table = t
+				m.currentView = ListContainer
+				return m, tea.ClearScreen
 
 			} else if m.currentView == OptionsContainer {
+				errAction := false
 				switch m.optionsView.Choices[m.optionsView.Cursor] {
 				case models.Stop:
 					err := dockerClient.ContainerStop(m.ContainerID)
 					if err != nil {
 						fmt.Println(err)
+						errAction = true
 					}
 					time.Sleep(1 * time.Second)
 				case models.Start:
 					err := dockerClient.ContainerStart(m.ContainerID)
 					if err != nil {
 						fmt.Println(err)
+						errAction = true
 					}
 				case models.Remove:
 					err := dockerClient.ContainerRemove(m.ContainerID)
 					if err != nil {
 						fmt.Println(err)
+						errAction = true
 					}
 				}
 
-				t := getTableWithData()
-				return model{
-					table:       t,
-					textinput:   m.textinput,
-					logsView:    m.logsView,
-					viewport:    m.viewport,
-					currentView: ListContainer,
-				}, tea.ClearScreen
+				if !errAction {
+					t := getTableWithData()
+					m.table = t
+					m.currentView = ListContainer
+					return m, tea.ClearScreen
+				}
 
 			} else {
 				container, err := dockerClient.GetContainerByName(m.table.SelectedRow()[1])
@@ -115,26 +115,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					fmt.Println(err)
 				}
 
-				v, _ := models.NewViewport(utils.GetContent(container, utils.CreateTable))
+				vp, err := models.NewViewport(utils.GetContent(container, utils.CreateTable))
+				if err != nil {
+					fmt.Println(err)
+				}
 
-				return model{
-					table:       m.table,
-					textinput:   m.textinput,
-					logsView:    m.logsView,
-					viewport:    v,
-					currentView: DetailContainer,
-				}, tea.ClearScreen
-
+				m.viewport = vp
+				m.currentView = DetailContainer
+				return m, tea.ClearScreen
 			}
 
 		case "ctrl+f":
 			m.textinput.SetValue("")
-			return model{
-				table:       m.table,
-				viewport:    m.viewport,
-				textinput:   m.textinput,
-				currentView: SearchContainer,
-			}, tea.ClearScreen
+			m.currentView = SearchContainer
+			return m, tea.ClearScreen
 
 		case "ctrl+l":
 			containerLogs, err := dockerClient.ContainerLogs(m.table.SelectedRow()[0])
@@ -161,15 +155,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+o":
 			ov := models.NewOptions(m.table.SelectedRow()[1], m.table.SelectedRow()[2])
-			return model{
-				table:       m.table,
-				viewport:    m.viewport,
-				textinput:   m.textinput,
-				logsView:    m.logsView,
-				optionsView: ov,
-				currentView: OptionsContainer,
-				ContainerID: m.table.SelectedRow()[0],
-			}, tea.ClearScreen
+			m.optionsView = ov
+			m.currentView = OptionsContainer
+			m.ContainerID = m.table.SelectedRow()[0]
+			return m, tea.ClearScreen
 
 		case "down", "j":
 			m.optionsView.Cursor++
@@ -184,12 +173,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "ctrl+e":
-			// TODO CHECK IF CONTAINER IS RUNNING OR COMMAND NOT EXISTED
-
 			return m, attachToContainer(m.table.SelectedRow()[0])
 		}
 
 	case attachExited:
+		if msg.err != nil {
+			m.err = msg.err
+		}
 
 	case tea.WindowSizeMsg:
 		headerHeight := lipgloss.Height(models.HeaderView(m.logsView.pager, ""))
@@ -222,6 +212,22 @@ var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 func (m model) View() string {
+	if m.err != nil {
+		errorStyle := lipgloss.NewStyle().
+			BorderStyle(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("#F1ECEB")).
+			Foreground(lipgloss.Color("#FC765B"))
+
+		errorText := ""
+		if m.err.Error() == "exit status 1" {
+			errorText = "Container is not running"
+		} else {
+			errorText = "OCI runtime exec failed: exec failed: unable to start container process: exec"
+		}
+
+		return errorStyle.Render("Error: " + errorText + " \n\nEsc to go back")
+	}
+
 	switch m.currentView {
 	case ListContainer:
 		return baseStyle.Render(m.table.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n\n ↑/↓: Navigate • Ctrl/C: Exit • Ctrl/F: Search • Ctrl/L: Logs container \n")
@@ -254,7 +260,6 @@ func attachToContainer(ID string) tea.Cmd {
 }
 
 var dockerClient *docker.Docker
-var containerList []docker.MyContainer
 var widthScreen int
 var heightScreen int
 
@@ -288,12 +293,13 @@ func main() {
 }
 
 func getTableWithData() table.Model {
-	containerList, err := dockerClient.ContainerList()
+	var err error
+	_, err = dockerClient.ContainerList()
 	// TODO FIX
 	if err != nil {
 		panic(err)
 	}
 
-	t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(containerList, ""))
+	t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(dockerClient.Containers, ""))
 	return t
 }
