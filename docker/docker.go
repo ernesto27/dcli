@@ -97,12 +97,7 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 		}
 
 		networkSettings := cJSON.NetworkSettings
-
-		// Print the container's network information
 		networkMode := string(cJSON.HostConfig.NetworkMode)
-		fmt.Printf("Name: %s\n", networkMode)
-		fmt.Printf("Gateway: %s\n", networkSettings.Gateway)
-		fmt.Printf("IP: %s\n", networkSettings.IPAddress)
 
 		mc = append(mc, MyContainer{
 			ID:         c.ID,

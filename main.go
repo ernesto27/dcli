@@ -7,6 +7,7 @@ import (
 	"dockerniceui/utils"
 	"fmt"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -55,6 +56,7 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -180,6 +182,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.optionsView.Cursor < 0 {
 				m.optionsView.Cursor = len(m.optionsView.Choices) - 1
 			}
+
+		case "ctrl+e":
+			// TODO CHECK IF CONTAINER IS RUNNING OR COMMAND NOT EXISTED
+			return m, attachToContainer(m.table.SelectedRow()[0])
 		}
 
 	case tea.WindowSizeMsg:
@@ -233,6 +239,11 @@ func (m model) View() string {
 
 	}
 
+}
+
+func attachToContainer(ID string) tea.Cmd {
+	c := exec.Command("docker", "exec", "-it", ID, "bin/bash")
+	return tea.ExecProcess(c, nil)
 }
 
 var dockerClient *docker.Docker
