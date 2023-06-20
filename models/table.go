@@ -3,6 +3,7 @@ package models
 import (
 	"dockerniceui/docker"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -63,6 +64,17 @@ func GetContainerRows(containerList []docker.MyContainer, query string) []table.
 	}
 
 	rowsItems := []table.Row{}
+
+	sort.SliceStable(filtered, func(i, j int) bool {
+		state1 := filtered[i].State
+		state2 := filtered[j].State
+
+		if state1 == running && state2 != running {
+			return true
+		} else {
+			return false
+		}
+	})
 
 	for _, c := range filtered {
 		port := ""

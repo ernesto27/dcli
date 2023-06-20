@@ -228,9 +228,14 @@ func (m model) View() string {
 		return errorStyle.Render("Error: " + errorText + " \n\nEsc to go back")
 	}
 
+	commands := `
+ GENERAL ↑/↓: Navigate • Ctrl/C: Exit • Esc: Back 
+ CONTAINERS Ctrl/F: Search • Ctrl/L: Logs • Ctrl/O: Options • Ctrl/E: Attach cmd
+	`
+
 	switch m.currentView {
 	case ListContainer:
-		return baseStyle.Render(m.table.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n\n ↑/↓: Navigate • Ctrl/C: Exit • Ctrl/F: Search • Ctrl/L: Logs container \n")
+		return baseStyle.Render(m.table.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
 	case DetailContainer:
 		return m.viewport.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
 	case SearchContainer:
