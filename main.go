@@ -22,12 +22,13 @@ var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#9999FF")).Render
 type currentView int
 
 const (
-	ListContainer currentView = iota
-	DetailContainer
-	SearchContainer
-	LogsContainer
-	OptionsContainer
-	ListImage
+	ContainerList currentView = iota
+	ContainerDetail
+	ContainerSearch
+	ContainerLogs
+	ContainerOptions
+	ImageList
+	ImageDetail
 )
 
 type LogsView struct {
@@ -43,6 +44,7 @@ type model struct {
 	logsView      LogsView
 	optionsView   models.Options
 	imageTable    table.Model
+	imageDetail   viewport.Model
 	ready         bool
 	currentView   currentView
 	ContainerID   string
@@ -67,20 +69,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = nil
 			t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(dockerClient.Containers, ""))
 			m.table = t
-			m.currentView = ListContainer
+			m.currentView = ContainerList
 			return m, tea.ClearScreen
 
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			if m.currentView == SearchContainer {
+			switch m.currentView {
+			case ContainerList:
+				container, err := dockerClient.GetContainerByName(m.table.SelectedRow()[1])
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				vp, err := models.NewViewport(utils.GetContent(container, utils.CreateTable))
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				m.viewport = vp
+				m.currentView = ContainerDetail
+				return m, tea.ClearScreen
+			case ContainerSearch:
 				value := m.textinput.Value()
 				t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(dockerClient.Containers, value))
 				m.table = t
-				m.currentView = ListContainer
+				m.currentView = ContainerList
 				return m, tea.ClearScreen
-
-			} else if m.currentView == OptionsContainer {
+			case ContainerOptions:
 				errAction := false
 				switch m.optionsView.Choices[m.optionsView.Cursor] {
 				case models.Stop:
@@ -107,29 +123,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if !errAction {
 					t := getTableWithData()
 					m.table = t
-					m.currentView = ListContainer
+					m.currentView = ContainerList
 					return m, tea.ClearScreen
 				}
 
-			} else {
-				container, err := dockerClient.GetContainerByName(m.table.SelectedRow()[1])
+			case ImageList:
+				img, err := dockerClient.GetImageByID(m.imageTable.SelectedRow()[0])
 				if err != nil {
 					fmt.Println(err)
 				}
 
-				vp, err := models.NewViewport(utils.GetContent(container, utils.CreateTable))
+				imgView, err := models.NewImageDetail(utils.GetContentDetailImage(img, utils.CreateTable))
 				if err != nil {
 					fmt.Println(err)
 				}
 
-				m.viewport = vp
-				m.currentView = DetailContainer
+				m.imageDetail = imgView
+				m.currentView = ImageDetail
+
 				return m, tea.ClearScreen
 			}
 
 		case "ctrl+f":
 			m.textinput.SetValue("")
-			m.currentView = SearchContainer
+			m.currentView = ContainerSearch
 			return m, tea.ClearScreen
 
 		case "ctrl+l":
@@ -147,18 +164,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				image:     m.table.SelectedRow()[2],
 			}
 
-			return model{
-				table:       m.table,
-				viewport:    m.viewport,
-				textinput:   m.textinput,
-				logsView:    lv,
-				currentView: LogsContainer,
-			}, tea.ClearScreen
+			m.logsView = lv
+			m.currentView = ContainerLogs
+
+			return m, tea.ClearScreen
 
 		case "ctrl+o":
 			ov := models.NewOptions(m.table.SelectedRow()[1], m.table.SelectedRow()[2])
 			m.optionsView = ov
-			m.currentView = OptionsContainer
+			m.currentView = ContainerOptions
 			m.ContainerID = m.table.SelectedRow()[0]
 			return m, tea.ClearScreen
 
@@ -184,7 +198,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.imageTable = models.NewImageTable(models.GetImageRows(images, ""))
-			m.currentView = ListImage
+			m.currentView = ImageList
 			return m, tea.ClearScreen
 		}
 
@@ -248,23 +262,25 @@ func (m model) View() string {
 	`
 
 	switch m.currentView {
-	case ListContainer:
+	case ContainerList:
 		return baseStyle.Render(m.table.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
-	case DetailContainer:
+	case ContainerDetail:
 		return m.viewport.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
-	case SearchContainer:
+	case ContainerSearch:
 		return fmt.Sprintf(
 			"Search container by name\n\n%s\n\n%s",
 			m.textinput.View(),
 			"(esc to back)",
 		) + "\n"
-	case LogsContainer:
+	case ContainerLogs:
 		return fmt.Sprintf("%s\n%s\n%s", models.HeaderView(m.logsView.pager, m.logsView.container+" - "+m.logsView.image), m.logsView.pager.View(), models.FooterView(m.logsView.pager))
-	case OptionsContainer:
+	case ContainerOptions:
 		return m.optionsView.View()
 
-	case ListImage:
+	case ImageList:
 		return baseStyle.Render(m.imageTable.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
+	case ImageDetail:
+		return m.imageDetail.View()
 	default:
 		return ""
 
@@ -301,7 +317,7 @@ func main() {
 	m := model{
 		table:         getTableWithData(),
 		textinput:     models.NewTextInput(),
-		currentView:   ListContainer,
+		currentView:   ContainerList,
 		dockerVersion: version,
 	}
 

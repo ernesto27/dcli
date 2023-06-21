@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -16,6 +17,7 @@ type Docker struct {
 	ctx context.Context
 
 	Containers []MyContainer
+	Images     []MyImage
 }
 
 type MyNetwork struct {
@@ -38,6 +40,19 @@ type MyContainer struct {
 	Command    string
 	Env        []string
 	Network    MyNetwork
+}
+
+type MyImage struct {
+	Summary types.ImageSummary
+	Inspect types.ImageInspect
+}
+
+func (i *MyImage) GetFormatTimestamp() string {
+	return FormatTimestamp(i.Summary.Created)
+}
+
+func (i *MyImage) GetFormatSize() string {
+	return formatSize(i.Summary.Size)
 }
 
 func New(ctx context.Context) (*Docker, error) {
@@ -72,6 +87,35 @@ func formatSize(size int64) string {
 	}
 }
 
+func FormatTimestamp(timestamp int64) string {
+	t := time.Unix(timestamp, 0)
+	duration := time.Since(t)
+
+	months := int(duration.Hours() / (24 * 30))
+	weeks := int(duration.Hours() / (24 * 7))
+	days := int(duration.Hours() / 24)
+
+	plural := "s"
+	if months > 0 {
+		if months == 1 {
+			plural = ""
+		}
+		return fmt.Sprintf("%d month%s ago", months, plural)
+	} else if weeks > 0 {
+		if weeks == 1 {
+			plural = ""
+		}
+		return fmt.Sprintf("%d week%s ago", weeks, plural)
+	} else if days > 0 {
+		if days == 1 {
+			plural = ""
+		}
+		return fmt.Sprintf("%d day%s ago", days, plural)
+	} else {
+		return "today"
+	}
+}
+
 func (d *Docker) ContainerList() ([]MyContainer, error) {
 	containers, err := d.cli.ContainerList(d.ctx, types.ContainerListOptions{
 		All: true,
@@ -82,9 +126,6 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 
 	mc := []MyContainer{}
 	for _, c := range containers {
-		// print struct with nice format
-		// fmt.Printf("%+v\n", c)
-
 		cJSON, _, err := d.cli.ContainerInspectWithRaw(d.ctx, c.ID, true)
 
 		if err != nil {
@@ -153,9 +194,16 @@ func (d *Docker) ContainerStart(containerID string) error {
 	return err
 }
 
-func (d *Docker) ImageList() ([]types.ImageSummary, error) {
+func (d *Docker) ImageList() ([]MyImage, error) {
 	images, err := d.cli.ImageList(d.ctx, types.ImageListOptions{})
+	myImages := []MyImage{}
+
 	for index, image := range images {
+		imageInspect, _, err := d.cli.ImageInspectWithRaw(d.ctx, image.ID)
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		image.ID = strings.Replace(image.ID, "sha256:", "", -1)
 
 		image.ID = trimValue(image.ID, 10)
@@ -165,9 +213,20 @@ func (d *Docker) ImageList() ([]types.ImageSummary, error) {
 			image.RepoTags = []string{"<none>"}
 		}
 		images[index] = image
+		myImages = append(myImages, MyImage{Summary: image, Inspect: imageInspect})
 	}
 
-	return images, err
+	d.Images = myImages
+	return myImages, err
+}
+
+func (d *Docker) GetImageByID(ID string) (MyImage, error) {
+	for _, i := range d.Images {
+		if i.Summary.ID == ID {
+			return i, nil
+		}
+	}
+	return MyImage{}, fmt.Errorf("image %s not found", ID)
 }
 
 func (d *Docker) ImageRemove(imageID string) error {
