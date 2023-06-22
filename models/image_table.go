@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func NewImageTable(rows []table.Row) table.Model {
+func NewImageList(rows []table.Row) table.Model {
 	columns := []table.Column{
 		{Title: "ID", Width: 20},
 		{Title: "Image", Width: 40},

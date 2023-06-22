@@ -38,18 +38,18 @@ type LogsView struct {
 }
 
 type model struct {
-	table         table.Model
-	viewport      viewport.Model
-	textinput     textinput.Model
-	logsView      LogsView
-	optionsView   models.Options
-	imageTable    table.Model
-	imageDetail   viewport.Model
-	ready         bool
-	currentView   currentView
-	ContainerID   string
-	dockerVersion string
-	err           error
+	containerList   table.Model
+	containerDetail viewport.Model
+	containerSearch textinput.Model
+	containerLogs   LogsView
+	optionsView     models.Options
+	imageTable      table.Model
+	imageDetail     viewport.Model
+	ready           bool
+	currentView     currentView
+	ContainerID     string
+	dockerVersion   string
+	err             error
 }
 
 func (m model) Init() tea.Cmd {
@@ -72,8 +72,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.err = nil
-			t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(dockerClient.Containers, ""))
-			m.table = t
+			t := models.NewContainerList(models.GetContainerRows(dockerClient.Containers, ""))
+			m.containerList = t
 			m.currentView = ContainerList
 			return m, tea.ClearScreen
 
@@ -82,23 +82,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			switch m.currentView {
 			case ContainerList:
-				container, err := dockerClient.GetContainerByName(m.table.SelectedRow()[1])
+				container, err := dockerClient.GetContainerByName(m.containerList.SelectedRow()[1])
 				if err != nil {
 					fmt.Println(err)
 				}
 
-				vp, err := models.NewViewport(utils.GetContent(container, utils.CreateTable))
+				vp, err := models.NewContainerDetail(container, utils.CreateTable)
 				if err != nil {
 					fmt.Println(err)
 				}
 
-				m.viewport = vp
+				m.containerDetail = vp
 				m.currentView = ContainerDetail
 				return m, tea.ClearScreen
 			case ContainerSearch:
-				value := m.textinput.Value()
-				t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(dockerClient.Containers, value))
-				m.table = t
+				value := m.containerSearch.Value()
+				t := models.NewContainerList(models.GetContainerRows(dockerClient.Containers, value))
+				m.containerList = t
 				m.currentView = ContainerList
 				return m, tea.ClearScreen
 			case ContainerOptions:
@@ -127,7 +127,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				if !errAction {
 					t := getTableWithData()
-					m.table = t
+					m.containerList = t
 					m.currentView = ContainerList
 					return m, tea.ClearScreen
 				}
@@ -138,7 +138,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					fmt.Println(err)
 				}
 
-				imgView, err := models.NewImageDetail(utils.GetContentDetailImage(img, utils.CreateTable))
+				imgView, err := models.NewImageDetail(img, utils.CreateTable)
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -150,35 +150,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "ctrl+f":
-			m.textinput.SetValue("")
+			m.containerSearch.SetValue("")
 			m.currentView = ContainerSearch
 			return m, tea.ClearScreen
 
 		case "ctrl+l":
-			containerLogs, err := dockerClient.ContainerLogs(m.table.SelectedRow()[0])
+			containerLogs, err := dockerClient.ContainerLogs(m.containerList.SelectedRow()[0])
 			if err != nil {
 				panic(err)
 			}
 
-			headerHeight := lipgloss.Height(models.HeaderView(m.logsView.pager, m.table.SelectedRow()[1]))
-			p := models.NewPager(widthScreen, heightScreen, containerLogs, headerHeight)
+			headerHeight := lipgloss.Height(models.HeaderView(m.containerLogs.pager, m.containerList.SelectedRow()[1]))
+			p := models.NewContainerLogs(widthScreen, heightScreen, containerLogs, headerHeight)
 
 			lv := LogsView{
 				pager:     p,
-				container: m.table.SelectedRow()[1],
-				image:     m.table.SelectedRow()[2],
+				container: m.containerList.SelectedRow()[1],
+				image:     m.containerList.SelectedRow()[2],
 			}
 
-			m.logsView = lv
+			m.containerLogs = lv
 			m.currentView = ContainerLogs
 
 			return m, tea.ClearScreen
 
 		case "ctrl+o":
-			ov := models.NewOptions(m.table.SelectedRow()[1], m.table.SelectedRow()[2])
+			ov := models.NewContainerOptions(m.containerList.SelectedRow()[1], m.containerList.SelectedRow()[2])
 			m.optionsView = ov
 			m.currentView = ContainerOptions
-			m.ContainerID = m.table.SelectedRow()[0]
+			m.ContainerID = m.containerList.SelectedRow()[0]
 			return m, tea.ClearScreen
 
 		case "down", "j":
@@ -194,7 +194,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "ctrl+e":
-			return m, attachToContainer(m.table.SelectedRow()[0])
+			return m, attachToContainer(m.containerList.SelectedRow()[0])
 
 		case "ctrl+b":
 			images, err := dockerClient.ImageList()
@@ -202,7 +202,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				fmt.Println(err)
 			}
 
-			m.imageTable = models.NewImageTable(models.GetImageRows(images, ""))
+			m.imageTable = models.NewImageList(models.GetImageRows(images, ""))
 			m.currentView = ImageList
 			return m, tea.ClearScreen
 		}
@@ -213,28 +213,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		headerHeight := lipgloss.Height(models.HeaderView(m.logsView.pager, ""))
-		footerHeight := lipgloss.Height(models.FooterView(m.logsView.pager))
+		headerHeight := lipgloss.Height(models.HeaderView(m.containerLogs.pager, ""))
+		footerHeight := lipgloss.Height(models.FooterView(m.containerLogs.pager))
 		verticalMarginHeight := headerHeight + footerHeight
 
 		if !m.ready {
 			widthScreen = msg.Width
 			heightScreen = msg.Height - verticalMarginHeight
-			m.logsView.pager.YPosition = headerHeight
+			m.containerLogs.pager.YPosition = headerHeight
 			m.ready = true
-			m.logsView.pager.YPosition = headerHeight + 1
+			m.containerLogs.pager.YPosition = headerHeight + 1
 		} else {
-			m.logsView.pager.Width = msg.Width
-			m.logsView.pager.Height = msg.Height - verticalMarginHeight
+			m.containerLogs.pager.Width = msg.Width
+			m.containerLogs.pager.Height = msg.Height - verticalMarginHeight
 		}
 
 	}
 
-	m.table, _ = m.table.Update(msg)
-	m.viewport, _ = m.viewport.Update(msg)
-	m.textinput, _ = m.textinput.Update(msg)
+	m.containerList, _ = m.containerList.Update(msg)
+	m.containerDetail, _ = m.containerDetail.Update(msg)
+	m.containerSearch, _ = m.containerSearch.Update(msg)
 	m.imageTable, _ = m.imageTable.Update(msg)
-	m.logsView.pager, cmd = m.logsView.pager.Update(msg)
+	m.containerLogs.pager, cmd = m.containerLogs.pager.Update(msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
@@ -268,17 +268,17 @@ func (m model) View() string {
 
 	switch m.currentView {
 	case ContainerList:
-		return baseStyle.Render(m.table.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
+		return baseStyle.Render(m.containerList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
 	case ContainerDetail:
-		return m.viewport.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
+		return m.containerDetail.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
 	case ContainerSearch:
 		return fmt.Sprintf(
 			"Search container by name\n\n%s\n\n%s",
-			m.textinput.View(),
+			m.containerSearch.View(),
 			"(esc to back)",
 		) + "\n"
 	case ContainerLogs:
-		return fmt.Sprintf("%s\n%s\n%s", models.HeaderView(m.logsView.pager, m.logsView.container+" - "+m.logsView.image), m.logsView.pager.View(), models.FooterView(m.logsView.pager))
+		return fmt.Sprintf("%s\n%s\n%s", models.HeaderView(m.containerLogs.pager, m.containerLogs.container+" - "+m.containerLogs.image), m.containerLogs.pager.View(), models.FooterView(m.containerLogs.pager))
 	case ContainerOptions:
 		return m.optionsView.View()
 
@@ -320,10 +320,10 @@ func main() {
 	}
 
 	m := model{
-		table:         getTableWithData(),
-		textinput:     models.NewTextInput(),
-		currentView:   ContainerList,
-		dockerVersion: version,
+		containerList:   getTableWithData(),
+		containerSearch: models.NewContainerSearch(),
+		currentView:     ContainerList,
+		dockerVersion:   version,
 	}
 
 	if _, err := tea.NewProgram(
@@ -343,6 +343,6 @@ func getTableWithData() table.Model {
 		panic(err)
 	}
 
-	t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(dockerClient.Containers, ""))
+	t := models.NewContainerList(models.GetContainerRows(dockerClient.Containers, ""))
 	return t
 }

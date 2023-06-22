@@ -22,7 +22,7 @@ var (
 	}()
 )
 
-func NewPager(width int, height int, logs string, headerHeight int) viewport.Model {
+func NewContainerLogs(width int, height int, logs string, headerHeight int) viewport.Model {
 	p := viewport.New(width, height)
 	p.YPosition = headerHeight + 1
 	p.SetContent(logs)

@@ -15,7 +15,16 @@ const (
 	exited  = "exited"
 )
 
-func NewTable(columns []table.Column, rows []table.Row) table.Model {
+func NewContainerList(rows []table.Row) table.Model {
+	columns := []table.Column{
+		{Title: "ID", Width: 20},
+		{Title: "Container", Width: 30},
+		{Title: "Image", Width: 30},
+		{Title: "Port", Width: 20},
+		{Title: "Size", Width: 20},
+		{Title: "Status", Width: 20},
+	}
+
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithRows(rows),
@@ -37,17 +46,6 @@ func NewTable(columns []table.Column, rows []table.Row) table.Model {
 	t.SetStyles(s)
 
 	return t
-}
-
-func GetContainerColumns() []table.Column {
-	return []table.Column{
-		{Title: "ID", Width: 20},
-		{Title: "Container", Width: 30},
-		{Title: "Image", Width: 30},
-		{Title: "Port", Width: 20},
-		{Title: "Size", Width: 20},
-		{Title: "Status", Width: 20},
-	}
 }
 
 func GetContainerRows(containerList []docker.MyContainer, query string) []table.Row {

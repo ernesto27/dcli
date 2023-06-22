@@ -19,7 +19,7 @@ const (
 	Remove = "Remove"
 )
 
-func NewOptions(container string, image string) Options {
+func NewContainerOptions(container string, image string) Options {
 	return Options{
 		Choices:   []string{Stop, Start, Remove},
 		Container: container,
