@@ -3,6 +3,8 @@ package models
 import (
 	"fmt"
 	"strings"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Options struct {
@@ -29,8 +31,16 @@ func NewContainerOptions(container string, image string) Options {
 
 func (o Options) View() string {
 	s := strings.Builder{}
-	options := fmt.Sprintf("Options container: %s - %s \n\n", o.Container, o.Image)
-	s.WriteString(options)
+
+	var style = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FAFAFA")).
+		Background(lipgloss.Color("#3259A8")).
+		Padding(1).
+		MarginTop(1).
+		MarginBottom(1)
+
+	s.WriteString("\n")
 
 	for i := 0; i < len(o.Choices); i++ {
 		if o.Cursor == i {
@@ -43,5 +53,6 @@ func (o Options) View() string {
 	}
 	s.WriteString("\n(press Esc to go back)\n")
 
-	return s.String()
+	options := fmt.Sprintf("Options container: %s - %s", o.Container, o.Image)
+	return style.Render(options) + s.String()
 }
