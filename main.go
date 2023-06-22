@@ -66,6 +66,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
+			if m.currentView == ImageDetail {
+				m.currentView = ImageList
+				return m, tea.ClearScreen
+			}
+
 			m.err = nil
 			t := models.NewTable(models.GetContainerColumns(), models.GetContainerRows(dockerClient.Containers, ""))
 			m.table = t
