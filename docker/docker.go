@@ -140,6 +140,17 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 		networkSettings := cJSON.NetworkSettings
 		networkMode := string(cJSON.HostConfig.NetworkMode)
 
+		defaultNetwork := "default"
+		ipAddress := networkSettings.IPAddress
+		if networkMode != defaultNetwork {
+			ipAddress = networkSettings.Networks[networkMode].IPAddress
+		}
+
+		gateway := networkSettings.Gateway
+		if networkMode != defaultNetwork {
+			gateway = networkSettings.Networks[networkMode].Gateway
+		}
+
 		mc = append(mc, MyContainer{
 			ID:         c.ID,
 			IDShort:    trimValue(c.ID, 10),
@@ -152,10 +163,11 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 			Ports:      c.Ports,
 			Size:       formatSize(*cJSON.SizeRootFs),
 			Env:        cJSON.Config.Env,
+			Command:    strings.Join(cJSON.Config.Entrypoint, " ") + " " + strings.Join(cJSON.Config.Cmd, " "),
 			Network: MyNetwork{
 				Name:      networkMode,
-				IPAddress: networkSettings.IPAddress,
-				Gateway:   networkSettings.Gateway,
+				IPAddress: ipAddress,
+				Gateway:   gateway,
 			},
 		})
 
