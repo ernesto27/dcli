@@ -93,6 +93,9 @@ Ctrl+l
 Sleep 5s
 Down 40
 Sleep 5s
+Escape
+Sleep 5s
+
 
 #options 
 Ctrl+o
