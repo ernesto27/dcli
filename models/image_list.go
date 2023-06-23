@@ -2,7 +2,7 @@ package models
 
 import (
 	"dockerniceui/docker"
-	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/lipgloss"
@@ -40,9 +40,19 @@ func NewImageList(rows []table.Row) table.Model {
 }
 
 func GetImageRows(images []docker.MyImage, query string) []table.Row {
+	var filtered []docker.MyImage
+	if query == "" {
+		filtered = images
+	} else {
+		for _, i := range images {
+			if strings.Contains(strings.ToLower(i.Summary.RepoTags[0]), strings.ToLower(query)) {
+				filtered = append(filtered, i)
+			}
+		}
+	}
+
 	rowsItems := []table.Row{}
-	for _, i := range images {
-		fmt.Println(i.Summary.Size)
+	for _, i := range filtered {
 		item := []string{i.Summary.ID, i.Summary.RepoTags[0], i.GetFormatSize(), i.GetFormatTimestamp()}
 		rowsItems = append(rowsItems, item)
 	}

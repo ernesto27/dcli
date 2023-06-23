@@ -4,7 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 )
 
-func NewContainerSearch() textinput.Model {
+func NewSearch() textinput.Model {
 	ti := textinput.New()
 	ti.Placeholder = ""
 	ti.Focus()

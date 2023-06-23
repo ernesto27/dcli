@@ -48,10 +48,16 @@ type MyImage struct {
 }
 
 func (i *MyImage) GetFormatTimestamp() string {
+	if i.Summary.Created == 0 {
+		return ""
+	}
 	return FormatTimestamp(i.Summary.Created)
 }
 
 func (i *MyImage) GetFormatSize() string {
+	if i.Summary.Size == 0 {
+		return ""
+	}
 	return formatSize(i.Summary.Size)
 }
 

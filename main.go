@@ -29,6 +29,7 @@ const (
 	ContainerOptions
 	ImageList
 	ImageDetail
+	ImageSearch
 )
 
 type LogsView struct {
@@ -43,8 +44,9 @@ type model struct {
 	containerSearch textinput.Model
 	containerLogs   LogsView
 	optionsView     models.Options
-	imageTable      table.Model
+	imageList       table.Model
 	imageDetail     viewport.Model
+	imageSearch     textinput.Model
 	ready           bool
 	currentView     currentView
 	ContainerID     string
@@ -133,7 +135,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 			case ImageList:
-				img, err := dockerClient.GetImageByID(m.imageTable.SelectedRow()[0])
+				img, err := dockerClient.GetImageByID(m.imageList.SelectedRow()[0])
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -147,11 +149,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.currentView = ImageDetail
 
 				return m, tea.ClearScreen
+
+			case ImageSearch:
+				value := m.imageSearch.Value()
+				imgList := models.NewImageList(models.GetImageRows(dockerClient.Images, value))
+				m.imageList = imgList
+				m.currentView = ImageList
+				return m, tea.ClearScreen
 			}
 
 		case "ctrl+f":
-			m.containerSearch.SetValue("")
-			m.currentView = ContainerSearch
+			if m.currentView == ContainerList {
+				m.containerSearch.SetValue("")
+				m.currentView = ContainerSearch
+
+			} else if m.currentView == ImageList {
+				m.imageSearch.SetValue("")
+				m.currentView = ImageSearch
+			}
+
 			return m, tea.ClearScreen
 
 		case "ctrl+l":
@@ -202,7 +218,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				fmt.Println(err)
 			}
 
-			m.imageTable = models.NewImageList(models.GetImageRows(images, ""))
+			m.imageList = models.NewImageList(models.GetImageRows(images, ""))
 			m.currentView = ImageList
 			return m, tea.ClearScreen
 		}
@@ -233,8 +249,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.containerList, _ = m.containerList.Update(msg)
 	m.containerDetail, _ = m.containerDetail.Update(msg)
 	m.containerSearch, _ = m.containerSearch.Update(msg)
-	m.imageTable, _ = m.imageTable.Update(msg)
-	m.containerLogs.pager, cmd = m.containerLogs.pager.Update(msg)
+	m.containerLogs.pager, _ = m.containerLogs.pager.Update(msg)
+	m.imageList, _ = m.imageList.Update(msg)
+	m.imageSearch, cmd = m.imageSearch.Update(msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
@@ -261,9 +278,9 @@ func (m model) View() string {
 	}
 
 	commands := `
- GENERAL ↑/↓: Navigate • Ctrl/C: Exit • Esc: Back 
- CONTAINERS Ctrl/F: Search • Ctrl/L: Logs • Ctrl/O: Options • Ctrl/E: Attach cmd
- IMAGES Ctrl/B: List
+ GENERAL ↑/↓: Navigate • ctrl/c: Exit • esc: Back 
+ CONTAINERS ctrl/f: Search • ctrl/l: Logs • ctrl/o: Options • ctrl/e: Attach cmd
+ IMAGES ctrl/b: List • ctrl/f: Search
 	`
 
 	switch m.currentView {
@@ -283,9 +300,15 @@ func (m model) View() string {
 		return m.optionsView.View()
 
 	case ImageList:
-		return baseStyle.Render(m.imageTable.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
+		return baseStyle.Render(m.imageList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
 	case ImageDetail:
 		return m.imageDetail.View()
+	case ImageSearch:
+		return fmt.Sprintf(
+			"Search image by name\n\n%s\n\n%s",
+			m.imageSearch.View(),
+			"(esc to back)",
+		) + "\n"
 	default:
 		return ""
 
@@ -321,7 +344,8 @@ func main() {
 
 	m := model{
 		containerList:   getTableWithData(),
-		containerSearch: models.NewContainerSearch(),
+		containerSearch: models.NewSearch(),
+		imageSearch:     models.NewSearch(),
 		currentView:     ContainerList,
 		dockerVersion:   version,
 	}
