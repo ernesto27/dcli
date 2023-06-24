@@ -87,6 +87,7 @@ Sleep 5s
 Enter
 Sleep 5s
 Escape
+Sleep 5s
 
 #logs 
 Ctrl+l 
@@ -100,9 +101,42 @@ Sleep 5s
 #options 
 Ctrl+o
 Sleep 5s
+Escape
+Sleep 5s
+
+#Exec container 
+Ctrl+e 
+Type ls
+Enter
+Sleep 5s 
+Type exit 
+Enter
+Sleep 5s
+
+#image list
+Ctrl+b 
+Sleep 5s 
 Enter 
+Sleep 5s 
+Escape 
+Sleep 5s 
 
+#image detail
+Enter 
+Sleep 5s 
+Escape
+Sleep 5s
 
+#image search 
+Ctrl+f 
+Sleep 3s
+Type nginx 
+Sleep 5s
+Enter 
+Sleep 5s 
+Enter 
+Sleep 5s 
+Escape
 
 
 
