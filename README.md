@@ -13,6 +13,10 @@ Go to release page and download the binary for your OS.
 
 https://github.com/ernesto27/container-nice-cli/releases
 
+![demo](https://github.com/ernesto27/container-nice-cli/assets/1366157/890befc6-68a8-4b9f-b6f1-410f326c96d8)
+
+
+
 
 ## TODO VIDEO DEMONSTRATION 
 
