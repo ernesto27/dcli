@@ -14,9 +14,7 @@ Go to release page and download the binary for your OS.
 https://github.com/ernesto27/container-nice-cli/releases
 
 ## Demo
-![demo](https://github.com/ernesto27/dcli/assets/1366157/418ec44e-1132-4098-99b1-76d71976d44b)
-
-
+![demo](https://github.com/ernesto27/dcli/assets/1366157/cdb05e5d-528d-431a-a240-0ac86bdf04d7)
 
 
 
