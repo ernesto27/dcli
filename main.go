@@ -362,9 +362,8 @@ func main() {
 func getTableWithData() table.Model {
 	var err error
 	_, err = dockerClient.ContainerList()
-	// TODO FIX
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 
 	t := models.NewContainerList(models.GetContainerRows(dockerClient.Containers, ""))
