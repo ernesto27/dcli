@@ -179,24 +179,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.ClearScreen
 
 		case "ctrl+l":
-			containerLogs, err := m.dockerClient.ContainerLogs(m.containerList.SelectedRow()[0])
-			if err != nil {
-				panic(err)
+			if m.currentView == ContainerList {
+				containerLogs, err := m.dockerClient.ContainerLogs(m.containerList.SelectedRow()[0])
+				if err != nil {
+					panic(err)
+				}
+
+				headerHeight := lipgloss.Height(HeaderView(m.containerLogs.pager, m.containerList.SelectedRow()[1]))
+				p := NewContainerLogs(m.widthScreen, m.heightScreen, containerLogs, headerHeight)
+
+				lv := LogsView{
+					pager:     p,
+					container: m.containerList.SelectedRow()[1],
+					image:     m.containerList.SelectedRow()[2],
+				}
+
+				m.containerLogs = lv
+				m.currentView = ContainerLogs
+
+				return m, tea.ClearScreen
 			}
-
-			headerHeight := lipgloss.Height(HeaderView(m.containerLogs.pager, m.containerList.SelectedRow()[1]))
-			p := NewContainerLogs(m.widthScreen, m.heightScreen, containerLogs, headerHeight)
-
-			lv := LogsView{
-				pager:     p,
-				container: m.containerList.SelectedRow()[1],
-				image:     m.containerList.SelectedRow()[2],
-			}
-
-			m.containerLogs = lv
-			m.currentView = ContainerLogs
-
-			return m, tea.ClearScreen
 
 		case "ctrl+o":
 			ov := NewContainerOptions(m.containerList.SelectedRow()[1], m.containerList.SelectedRow()[2])
