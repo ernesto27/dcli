@@ -3,6 +3,7 @@ package models
 import (
 	"dockerniceui/docker"
 	"dockerniceui/utils"
+	"fmt"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/glamour"
@@ -52,6 +53,12 @@ func getContent(container docker.MyContainer) string {
 
 	response += "\n\n---\n\n"
 	rows := [][]string{}
+
+	ports := ""
+	for _, c := range container.Ports {
+		ports += fmt.Sprintf("%s:%d->%d/%s ", c.IP, c.PublicPort, c.PrivatePort, c.Type)
+	}
+	rows = append(rows, []string{"Ports", ports})
 	rows = append(rows, []string{"Command", container.Command})
 
 	for _, env := range container.Env {
