@@ -10,14 +10,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var dockerClient *docker.Docker
-var widthScreen int
-var heightScreen int
-
 func main() {
 	ctx := context.Background()
-	var err error
-	dockerClient, err = docker.New(ctx)
+	dockerClient, err := docker.New(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -29,16 +24,7 @@ func main() {
 
 	dockerClient.Events()
 
-	// m := model{
-	// 	containerList:   getTableWithData(),
-	// 	containerSearch: models.NewSearch(),
-	// 	imageSearch:     models.NewSearch(),
-	// 	currentView:     ContainerList,
-	// 	dockerVersion:   version,
-	// }
-
-	m := models.NewModel(&dockerClient, version)
-
+	m := models.NewModel(dockerClient, version)
 	if _, err := tea.NewProgram(
 		m,
 		tea.WithAltScreen(),

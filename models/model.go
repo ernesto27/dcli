@@ -50,17 +50,20 @@ type model struct {
 	ContainerID     string
 	dockerVersion   string
 	err             error
+	widthScreen     int
+	heightScreen    int
 }
 
 func NewModel(dockerClient *docker.Docker, version string) *model {
-	return &model{
+	m := &model{
 		dockerClient:    dockerClient,
-		containerList:   getTableWithData(),
 		containerSearch: NewSearch(),
 		imageSearch:     NewSearch(),
 		currentView:     ContainerList,
 		dockerVersion:   version,
 	}
+	m.setContainerList()
+	return m
 }
 
 func (m model) Init() tea.Cmd {
@@ -134,8 +137,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if !errAction {
-					t := getTableWithData()
-					m.containerList = t
+					m.setContainerList()
 					m.currentView = ContainerList
 					return m, tea.ClearScreen
 				}
@@ -183,7 +185,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			headerHeight := lipgloss.Height(HeaderView(m.containerLogs.pager, m.containerList.SelectedRow()[1]))
-			p := NewContainerLogs(widthScreen, heightScreen, containerLogs, headerHeight)
+			p := NewContainerLogs(m.widthScreen, m.heightScreen, containerLogs, headerHeight)
 
 			lv := LogsView{
 				pager:     p,
@@ -245,8 +247,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		verticalMarginHeight := headerHeight + footerHeight
 
 		if !m.ready {
-			widthScreen = msg.Width
-			heightScreen = msg.Height - verticalMarginHeight
+			m.widthScreen = msg.Width
+			m.heightScreen = msg.Height - verticalMarginHeight
 			m.containerLogs.pager.YPosition = headerHeight
 			m.ready = true
 			m.containerLogs.pager.YPosition = headerHeight + 1
@@ -306,7 +308,7 @@ func (m model) View() string {
 			"(esc to back)",
 		) + "\n"
 	case ContainerLogs:
-		return fmt.Sprintf("%s\n%s\n%s", HeaderView(m.containerLogs.pager, m.containerLogs.container+" - "+m.containerLogs.image), m.containerLogs.pager.View(), models.FooterView(m.containerLogs.pager))
+		return fmt.Sprintf("%s\n%s\n%s", HeaderView(m.containerLogs.pager, m.containerLogs.container+" - "+m.containerLogs.image), m.containerLogs.pager.View(), FooterView(m.containerLogs.pager))
 	case ContainerOptions:
 		return m.optionsView.View()
 
@@ -327,13 +329,6 @@ func (m model) View() string {
 
 }
 
-func (m *model) setContainerList() {
-	m.err = nil
-	t := NewContainerList(GetContainerRows(m.dockerClient.Containers, ""))
-	m.containerList = t
-	m.currentView = ContainerList
-}
-
 type attachExited struct{ err error }
 
 func attachToContainer(ID string) tea.Cmd {
@@ -343,7 +338,7 @@ func attachToContainer(ID string) tea.Cmd {
 	})
 }
 
-func (m *model) getTableWithData() table.Model {
+func (m *model) setContainerList() {
 	var err error
 	_, err = m.dockerClient.ContainerList()
 	if err != nil {
@@ -351,5 +346,6 @@ func (m *model) getTableWithData() table.Model {
 	}
 
 	t := NewContainerList(GetContainerRows(m.dockerClient.Containers, ""))
-	return t
+	m.containerList = t
+	m.currentView = ContainerList
 }
