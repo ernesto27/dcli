@@ -201,11 +201,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "ctrl+o":
-			ov := NewContainerOptions(m.containerList.SelectedRow()[1], m.containerList.SelectedRow()[2])
-			m.optionsView = ov
-			m.currentView = ContainerOptions
-			m.ContainerID = m.containerList.SelectedRow()[0]
-			return m, tea.ClearScreen
+			if m.currentView == ContainerList {
+				ov := NewContainerOptions(m.containerList.SelectedRow()[1], m.containerList.SelectedRow()[2])
+				m.optionsView = ov
+				m.currentView = ContainerOptions
+				m.ContainerID = m.containerList.SelectedRow()[0]
+				return m, tea.ClearScreen
+			}
 
 		case "down", "j":
 			m.optionsView.Cursor++
@@ -348,6 +350,7 @@ func (m *model) setContainerList() {
 	}
 
 	t := NewContainerList(GetContainerRows(m.dockerClient.Containers, ""))
+	m.err = nil
 	m.containerList = t
 	m.currentView = ContainerList
 }
