@@ -73,10 +73,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.ClearScreen
 			}
 
-			m.err = nil
-			t := models.NewContainerList(models.GetContainerRows(dockerClient.Containers, ""))
-			m.containerList = t
-			m.currentView = ContainerList
+			m.setContainerList()
 			return m, tea.ClearScreen
 
 		case "ctrl+c":
@@ -221,6 +218,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.imageList = models.NewImageList(models.GetImageRows(images, ""))
 			m.currentView = ImageList
 			return m, tea.ClearScreen
+
+		case "ctrl+r":
+			m.setContainerList()
+			return m, tea.ClearScreen
+
 		}
 
 	case attachExited:
@@ -278,7 +280,7 @@ func (m model) View() string {
 	}
 
 	commands := `
- GENERAL ↑/↓: Navigate • ctrl/c: Exit • esc: Back 
+ GENERAL ↑/↓: Navigate • ctrl/c: Exit • ctrl/r: refresh • esc: Back 
  CONTAINERS ctrl/f: Search • ctrl/l: Logs • ctrl/o: Options • ctrl/e: Attach cmd
  IMAGES ctrl/b: List • ctrl/f: Search
 	`
@@ -316,6 +318,13 @@ func (m model) View() string {
 
 }
 
+func (m *model) setContainerList() {
+	m.err = nil
+	t := models.NewContainerList(models.GetContainerRows(dockerClient.Containers, ""))
+	m.containerList = t
+	m.currentView = ContainerList
+}
+
 type attachExited struct{ err error }
 
 func attachToContainer(ID string) tea.Cmd {
@@ -341,6 +350,8 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	dockerClient.Events()
 
 	m := model{
 		containerList:   getTableWithData(),

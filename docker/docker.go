@@ -301,6 +301,21 @@ func (d *Docker) ContainerLogs(containerId string) (string, error) {
 	return logs, nil
 }
 
+func (d *Docker) Events() {
+	go func() {
+		eventStream, err := d.cli.Events(d.ctx, types.EventsOptions{})
+		for {
+			select {
+			case err := <-err:
+				fmt.Println(err)
+
+			case <-eventStream:
+				d.Containers, _ = d.ContainerList()
+			}
+		}
+	}()
+}
+
 func reverseLines(lines []string) {
 	i := 0
 	j := len(lines) - 1
