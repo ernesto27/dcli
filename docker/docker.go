@@ -3,12 +3,14 @@ package docker
 import (
 	"bufio"
 	"context"
+	"dockerniceui/utils"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 )
 
@@ -45,6 +47,7 @@ type MyContainer struct {
 type MyImage struct {
 	Summary types.ImageSummary
 	Inspect types.ImageInspect
+	History []image.HistoryResponseItem
 }
 
 func (i *MyImage) GetFormatTimestamp() string {
@@ -159,11 +162,11 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 
 		mc = append(mc, MyContainer{
 			ID:         c.ID,
-			IDShort:    trimValue(c.ID, 10),
+			IDShort:    utils.TrimValue(c.ID, 10),
 			Name:       name,
-			NameShort:  trimValue(name, 20),
+			NameShort:  utils.TrimValue(name, 20),
 			Image:      c.Image,
-			ImageShort: trimValue(c.Image, 20),
+			ImageShort: utils.TrimValue(c.Image, 20),
 			State:      c.State,
 			Status:     c.Status,
 			Ports:      c.Ports,
@@ -222,16 +225,28 @@ func (d *Docker) ImageList() ([]MyImage, error) {
 			fmt.Println(err)
 		}
 
-		image.ID = strings.Replace(image.ID, "sha256:", "", -1)
+		fullID := strings.Replace(image.ID, "sha256:", "", -1)
 
-		image.ID = trimValue(image.ID, 10)
+		image.ID = utils.TrimValue(fullID, 10)
 		if len(image.RepoTags) > 0 {
-			image.RepoTags[0] = trimValue(image.RepoTags[0], 40)
+			image.RepoTags[0] = utils.TrimValue(image.RepoTags[0], 40)
 		} else {
 			image.RepoTags = []string{"<none>"}
 		}
 		images[index] = image
-		myImages = append(myImages, MyImage{Summary: image, Inspect: imageInspect})
+
+		h, err := d.cli.ImageHistory(d.ctx, fullID)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		utils.ReverseSlice(h)
+
+		myImages = append(myImages, MyImage{
+			Summary: image,
+			Inspect: imageInspect,
+			History: h,
+		})
 	}
 
 	d.Images = myImages
@@ -291,7 +306,7 @@ func (d *Docker) ContainerLogs(containerId string) (string, error) {
 		response = append(response, line)
 	}
 
-	reverseLines(response)
+	utils.ReverseLines(response)
 
 	logs := ""
 	for _, l := range response {
@@ -314,22 +329,4 @@ func (d *Docker) Events() {
 			}
 		}
 	}()
-}
-
-func reverseLines(lines []string) {
-	i := 0
-	j := len(lines) - 1
-
-	for i < j {
-		lines[i], lines[j] = lines[j], lines[i]
-		i++
-		j--
-	}
-}
-
-func trimValue(s string, max int) string {
-	if len(s) > max {
-		return s[:max] + "..."
-	}
-	return s
 }

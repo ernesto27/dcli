@@ -1,6 +1,109 @@
 package utils
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/docker/docker/api/types/image"
+)
+
+func TestReverseSlice(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    []image.HistoryResponseItem
+		expected []image.HistoryResponseItem
+	}{
+		{
+			name:     "empty slice",
+			input:    []image.HistoryResponseItem{},
+			expected: []image.HistoryResponseItem{},
+		},
+		{
+			name: "slice with one element",
+			input: []image.HistoryResponseItem{
+				{
+					ID: "123",
+				},
+			},
+			expected: []image.HistoryResponseItem{
+				{
+					ID: "123",
+				},
+			},
+		},
+		{
+			name: "slice with even number of elements",
+			input: []image.HistoryResponseItem{
+				{
+					ID: "123",
+				},
+				{
+					ID: "456",
+				},
+				{
+					ID: "789",
+				},
+				{
+					ID: "012",
+				},
+			},
+			expected: []image.HistoryResponseItem{
+				{
+					ID: "012",
+				},
+				{
+					ID: "789",
+				},
+				{
+					ID: "456",
+				},
+				{
+					ID: "123",
+				},
+			},
+		},
+		{
+			name: "slice with odd number of elements",
+			input: []image.HistoryResponseItem{
+				{
+					ID: "123",
+				},
+				{
+					ID: "456",
+				},
+				{
+					ID: "789",
+				},
+			},
+			expected: []image.HistoryResponseItem{
+				{
+					ID: "789",
+				},
+				{
+					ID: "456",
+				},
+				{
+					ID: "123",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ReverseSlice(tc.input)
+
+			if len(tc.input) != len(tc.expected) {
+				t.Fatalf("expected length %d, but got %d", len(tc.expected), len(tc.input))
+			}
+
+			for i := range tc.input {
+				if tc.input[i].ID != tc.expected[i].ID {
+					t.Errorf("expected %v, but got %v", tc.expected[i], tc.input[i])
+				}
+			}
+		})
+	}
+}
 
 func TestCreateTable(t *testing.T) {
 	type args struct {

@@ -64,8 +64,18 @@ func getContentDetailImage(image docker.MyImage) string {
 			{"Envs", fmt.Sprintf("%v", image.Inspect.Config.Env)},
 		})
 
-	response += "\n\n---\n\n"
 	response += "# Docker hub image url \n " + utils.GetDockerHubURL(image.Summary.RepoTags[0])
+
+	rows := [][]string{}
+	for _, l := range image.History {
+		if l.CreatedBy == "" {
+			continue
+		}
+		rows = append(rows, []string{utils.TrimValue(l.CreatedBy, 40)})
+	}
+
+	response += utils.CreateTable("\n\n# Image Layers \n", []string{"Layer"}, rows)
+	response += "\n\n\n\n"
 
 	return response
 }

@@ -3,6 +3,8 @@ package utils
 import (
 	"fmt"
 	"strings"
+
+	"github.com/docker/docker/api/types/image"
 )
 
 type CreateTableFunc func(string, []string, [][]string) string
@@ -50,4 +52,29 @@ func GetDockerHubURL(image string) string {
 	dockerHubLink := fmt.Sprintf("https://hub.docker.com/%s/%s", pathDefault, image)
 
 	return dockerHubLink
+}
+
+func ReverseLines(lines []string) {
+	i := 0
+	j := len(lines) - 1
+
+	for i < j {
+		lines[i], lines[j] = lines[j], lines[i]
+		i++
+		j--
+	}
+}
+
+func ReverseSlice[T image.HistoryResponseItem](s []T) {
+	for i := 0; i < len(s)/2; i++ {
+		j := len(s) - i - 1
+		s[i], s[j] = s[j], s[i]
+	}
+}
+
+func TrimValue(s string, max int) string {
+	if len(s) > max {
+		return s[:max] + "..."
+	}
+	return s
 }
