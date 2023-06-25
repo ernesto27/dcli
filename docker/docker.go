@@ -250,7 +250,7 @@ func (d *Docker) GetImageByID(ID string) (MyImage, error) {
 func (d *Docker) ImageRemove(imageID string) error {
 	_, err := d.cli.ImageRemove(d.ctx, imageID, types.ImageRemoveOptions{
 		PruneChildren: true,
-		Force:         true,
+		Force:         false,
 	})
 	return err
 }
@@ -310,7 +310,7 @@ func (d *Docker) Events() {
 				fmt.Println(err)
 
 			case <-eventStream:
-				d.Containers, _ = d.ContainerList()
+				d.ContainerList()
 			}
 		}
 	}()

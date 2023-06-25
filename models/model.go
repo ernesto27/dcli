@@ -82,7 +82,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if m.currentView == ImageDetail {
+			if m.currentView == ImageDetail || m.currentView == ImageOptions {
 				m.currentView = ImageList
 				return m, tea.ClearScreen
 			}
@@ -186,6 +186,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if !errAction {
+					images, err := m.dockerClient.ImageList()
+					if err != nil {
+						fmt.Println(err)
+					}
+
+					m.imageList = NewImageList(GetImageRows(images, ""))
 					m.currentView = ImageList
 					return m, tea.ClearScreen
 				}
