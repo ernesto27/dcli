@@ -16,14 +16,15 @@ type Options struct {
 }
 
 const (
-	Stop   = "Stop"
-	Start  = "Start"
-	Remove = "Remove"
+	Stop    = "Stop"
+	Start   = "Start"
+	Remove  = "Remove"
+	Restart = "Restart"
 )
 
 func NewContainerOptions(container string, image string) Options {
 	return Options{
-		Choices:   []string{Stop, Start, Remove},
+		Choices:   []string{Stop, Start, Remove, Restart},
 		Container: container,
 		Image:     image,
 	}

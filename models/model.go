@@ -134,6 +134,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						fmt.Println(err)
 						errAction = true
 					}
+				case Restart:
+					err := m.dockerClient.ContainerRestart(m.ContainerID)
+					if err != nil {
+						fmt.Println(err)
+						errAction = true
+					}
 				}
 
 				if !errAction {
