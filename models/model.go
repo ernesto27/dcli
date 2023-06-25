@@ -27,6 +27,7 @@ const (
 	ImageList
 	ImageDetail
 	ImageSearch
+	ImageOptions
 )
 
 type LogsView struct {
@@ -36,22 +37,23 @@ type LogsView struct {
 }
 
 type model struct {
-	dockerClient    *docker.Docker
-	containerList   table.Model
-	containerDetail viewport.Model
-	containerSearch textinput.Model
-	containerLogs   LogsView
-	optionsView     Options
-	imageList       table.Model
-	imageDetail     viewport.Model
-	imageSearch     textinput.Model
-	ready           bool
-	currentView     currentView
-	ContainerID     string
-	dockerVersion   string
-	err             error
-	widthScreen     int
-	heightScreen    int
+	dockerClient     *docker.Docker
+	containerList    table.Model
+	containerDetail  viewport.Model
+	containerSearch  textinput.Model
+	containerLogs    LogsView
+	containerOptions Options
+	imageList        table.Model
+	imageDetail      viewport.Model
+	imageSearch      textinput.Model
+	imageOptions     Options
+	ready            bool
+	currentView      currentView
+	ContainerID      string
+	dockerVersion    string
+	err              error
+	widthScreen      int
+	heightScreen     int
 }
 
 func NewModel(dockerClient *docker.Docker, version string) *model {
@@ -114,7 +116,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.ClearScreen
 			case ContainerOptions:
 				errAction := false
-				switch m.optionsView.Choices[m.optionsView.Cursor] {
+				switch m.containerOptions.Choices[m.containerOptions.Cursor] {
 				case Stop:
 					err := m.dockerClient.ContainerStop(m.ContainerID)
 					if err != nil {
@@ -170,6 +172,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.imageList = imgList
 				m.currentView = ImageList
 				return m, tea.ClearScreen
+
+			case ImageOptions:
+				errAction := false
+				option := m.imageOptions.Choices[m.imageOptions.Cursor]
+
+				if option == Remove {
+					err := m.dockerClient.ImageRemove(m.imageList.SelectedRow()[1])
+					if err != nil {
+						fmt.Println(err)
+						errAction = true
+					}
+				}
+
+				if !errAction {
+					m.currentView = ImageList
+					return m, tea.ClearScreen
+				}
 			}
 
 		case "ctrl+f":
@@ -209,22 +228,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+o":
 			if m.currentView == ContainerList {
 				ov := NewContainerOptions(m.containerList.SelectedRow()[1], m.containerList.SelectedRow()[2])
-				m.optionsView = ov
+				m.containerOptions = ov
 				m.currentView = ContainerOptions
 				m.ContainerID = m.containerList.SelectedRow()[0]
+				return m, tea.ClearScreen
+			} else if m.currentView == ImageList {
+				ov := NewContainerOptions("", m.imageList.SelectedRow()[1])
+				m.imageOptions = ov
+				m.currentView = ImageOptions
 				return m, tea.ClearScreen
 			}
 
 		case "down", "j":
-			m.optionsView.Cursor++
-			if m.optionsView.Cursor >= len(m.optionsView.Choices) {
-				m.optionsView.Cursor = 0
+			m.containerOptions.Cursor++
+			if m.containerOptions.Cursor >= len(m.containerOptions.Choices) {
+				m.containerOptions.Cursor = 0
 			}
 
 		case "up", "k":
-			m.optionsView.Cursor--
-			if m.optionsView.Cursor < 0 {
-				m.optionsView.Cursor = len(m.optionsView.Choices) - 1
+			m.containerOptions.Cursor--
+			if m.containerOptions.Cursor < 0 {
+				m.containerOptions.Cursor = len(m.containerOptions.Choices) - 1
 			}
 
 		case "ctrl+e":
@@ -274,6 +298,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.containerSearch, _ = m.containerSearch.Update(msg)
 	m.containerLogs.pager, _ = m.containerLogs.pager.Update(msg)
 	m.imageList, _ = m.imageList.Update(msg)
+	m.imageDetail, _ = m.imageDetail.Update(msg)
 	m.imageSearch, cmd = m.imageSearch.Update(msg)
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -320,7 +345,9 @@ func (m model) View() string {
 	case ContainerLogs:
 		return fmt.Sprintf("%s\n%s\n%s", HeaderView(m.containerLogs.pager, m.containerLogs.container+" - "+m.containerLogs.image), m.containerLogs.pager.View(), FooterView(m.containerLogs.pager))
 	case ContainerOptions:
-		return m.optionsView.View()
+		return m.containerOptions.View()
+	case ImageOptions:
+		return m.imageOptions.View()
 
 	case ImageList:
 		return baseStyle.Render(m.imageList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
