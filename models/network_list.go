@@ -54,12 +54,19 @@ func GetNetworkRows(networkList []types.NetworkResource, query string) []table.R
 
 	var rows []table.Row
 	for _, network := range filtered {
+		subnet := ""
+		gateway := ""
+		if len(network.IPAM.Config) > 0 {
+			subnet = network.IPAM.Config[0].Subnet
+			gateway = network.IPAM.Config[0].Gateway
+		}
+
 		rows = append(rows, table.Row{
 			network.ID,
 			network.Name,
 			network.Driver,
-			"",
-			"",
+			subnet,
+			gateway,
 		})
 	}
 
