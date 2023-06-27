@@ -20,6 +20,7 @@ type Docker struct {
 
 	Containers []MyContainer
 	Images     []MyImage
+	Networks   []types.NetworkResource
 }
 
 type MyNetwork struct {
@@ -322,6 +323,7 @@ func (d *Docker) NetworkList() ([]types.NetworkResource, error) {
 		return networks, err
 	}
 
+	d.Networks = networks
 	return networks, nil
 }
 

@@ -31,6 +31,7 @@ const (
 	ImageOptions
 
 	NetworkList
+	NetworkSearch
 )
 
 type LogsView struct {
@@ -51,6 +52,7 @@ type model struct {
 	imageSearch      textinput.Model
 	imageOptions     Options
 	networkList      table.Model
+	networkSearch    textinput.Model
 	ready            bool
 	currentView      currentView
 	ContainerID      string
@@ -65,17 +67,11 @@ func NewModel(dockerClient *docker.Docker, version string) *model {
 		dockerClient:    dockerClient,
 		containerSearch: NewSearch(),
 		imageSearch:     NewSearch(),
+		networkSearch:   NewSearch(),
 		currentView:     ContainerList,
 		dockerVersion:   version,
 	}
 	m.setContainerList()
-
-	rows := []table.Row{
-		{"ID", "Name", "Driver", "IP Subnet", "IP Gateway"},
-		{"ID", "Name", "Driver", "IP Subnet", "IP Gateway"},
-	}
-
-	m.networkList = NewNetworkList(rows)
 
 	return m
 }
@@ -207,16 +203,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.currentView = ImageList
 					return m, tea.ClearScreen
 				}
+			case NetworkSearch:
+				value := m.networkSearch.Value()
+				networks := NewNetworkList(GetNetworkRows(m.dockerClient.Networks, value))
+				m.networkList = networks
+				m.currentView = NetworkList
 			}
 
 		case "ctrl+f":
-			if m.currentView == ContainerList {
+			switch m.currentView {
+			case ContainerList:
 				m.containerSearch.SetValue("")
 				m.currentView = ContainerSearch
-
-			} else if m.currentView == ImageList {
+			case ImageList:
 				m.imageSearch.SetValue("")
 				m.currentView = ImageSearch
+			case NetworkList:
+				m.networkSearch.SetValue("")
+				m.currentView = NetworkSearch
 			}
 
 			return m, tea.ClearScreen
@@ -328,6 +332,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.imageList, _ = m.imageList.Update(msg)
 	m.imageDetail, _ = m.imageDetail.Update(msg)
 	m.networkList, _ = m.networkList.Update(msg)
+	m.networkSearch, _ = m.networkSearch.Update(msg)
 	m.imageSearch, cmd = m.imageSearch.Update(msg)
 
 	cmds = append(cmds, cmd)
@@ -359,6 +364,7 @@ func (m model) View() string {
  GENERAL ↑/↓: Navigate • ctrl/c: Exit • ctrl/r: refresh • esc: Back 
  CONTAINERS ctrl/f: Search • ctrl/l: Logs • ctrl/o: Options • ctrl/e: Attach cmd
  IMAGES ctrl/b: List • ctrl/f: Search
+ NETWORKS ctrl/n: List
 	`
 
 	switch m.currentView {
@@ -392,6 +398,13 @@ func (m model) View() string {
 
 	case NetworkList:
 		return baseStyle.Render(m.networkList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
+	case NetworkSearch:
+		return fmt.Sprintf(
+			"Search network by name\n\n%s\n\n%s",
+			m.networkSearch.View(),
+			"(esc to back)",
+		) + "\n"
+
 	default:
 		return ""
 
