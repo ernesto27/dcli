@@ -316,6 +316,15 @@ func (d *Docker) ContainerLogs(containerId string) (string, error) {
 	return logs, nil
 }
 
+func (d *Docker) NetworkList() ([]types.NetworkResource, error) {
+	networks, err := d.cli.NetworkList(d.ctx, types.NetworkListOptions{})
+	if err != nil {
+		return networks, err
+	}
+
+	return networks, nil
+}
+
 func (d *Docker) Events() {
 	go func() {
 		eventStream, err := d.cli.Events(d.ctx, types.EventsOptions{})

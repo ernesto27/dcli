@@ -24,10 +24,13 @@ const (
 	ContainerSearch
 	ContainerLogs
 	ContainerOptions
+
 	ImageList
 	ImageDetail
 	ImageSearch
 	ImageOptions
+
+	NetworkList
 )
 
 type LogsView struct {
@@ -47,6 +50,7 @@ type model struct {
 	imageDetail      viewport.Model
 	imageSearch      textinput.Model
 	imageOptions     Options
+	networkList      table.Model
 	ready            bool
 	currentView      currentView
 	ContainerID      string
@@ -65,6 +69,14 @@ func NewModel(dockerClient *docker.Docker, version string) *model {
 		dockerVersion:   version,
 	}
 	m.setContainerList()
+
+	rows := []table.Row{
+		{"ID", "Name", "Driver", "IP Subnet", "IP Gateway"},
+		{"ID", "Name", "Driver", "IP Subnet", "IP Gateway"},
+	}
+
+	m.networkList = NewNetworkList(rows)
+
 	return m
 }
 
@@ -270,6 +282,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentView = ImageList
 			return m, tea.ClearScreen
 
+		case "ctrl+n":
+			networks, err := m.dockerClient.NetworkList()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			m.networkList = NewNetworkList(GetNetworkRows(networks, ""))
+			m.currentView = NetworkList
+			return m, tea.ClearScreen
+
 		case "ctrl+r":
 			m.setContainerList()
 			return m, tea.ClearScreen
@@ -305,7 +327,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.containerLogs.pager, _ = m.containerLogs.pager.Update(msg)
 	m.imageList, _ = m.imageList.Update(msg)
 	m.imageDetail, _ = m.imageDetail.Update(msg)
+	m.networkList, _ = m.networkList.Update(msg)
 	m.imageSearch, cmd = m.imageSearch.Update(msg)
+
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
@@ -365,6 +389,9 @@ func (m model) View() string {
 			m.imageSearch.View(),
 			"(esc to back)",
 		) + "\n"
+
+	case NetworkList:
+		return baseStyle.Render(m.networkList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
 	default:
 		return ""
 
