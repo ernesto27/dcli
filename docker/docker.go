@@ -20,13 +20,15 @@ type Docker struct {
 
 	Containers []MyContainer
 	Images     []MyImage
-	Networks   []types.NetworkResource
+	Networks   []MyNetwork
 }
 
 type MyNetwork struct {
 	Name      string
 	IPAddress string
 	Gateway   string
+	Subnet    string
+	Resource  types.NetworkResource
 }
 
 type MyContainer struct {
@@ -317,14 +319,40 @@ func (d *Docker) ContainerLogs(containerId string) (string, error) {
 	return logs, nil
 }
 
-func (d *Docker) NetworkList() ([]types.NetworkResource, error) {
+func (d *Docker) NetworkList() ([]MyNetwork, error) {
+	myNetwork := []MyNetwork{}
 	networks, err := d.cli.NetworkList(d.ctx, types.NetworkListOptions{})
 	if err != nil {
-		return networks, err
+		return myNetwork, err
 	}
 
-	d.Networks = networks
-	return networks, nil
+	for _, n := range networks {
+		subnet := ""
+		gateway := ""
+		if len(n.IPAM.Config) > 0 {
+			subnet = n.IPAM.Config[0].Subnet
+			gateway = n.IPAM.Config[0].Gateway
+		}
+
+		myNetwork = append(myNetwork, MyNetwork{
+			Resource: n,
+			Gateway:  gateway,
+			Subnet:   subnet,
+		})
+	}
+
+	d.Networks = myNetwork
+
+	return myNetwork, nil
+}
+
+func (d *Docker) GetNetworkByName(name string) (MyNetwork, error) {
+	for _, n := range d.Networks {
+		if n.Resource.Name == name {
+			return n, nil
+		}
+	}
+	return MyNetwork{}, fmt.Errorf("network %s not found", name)
 }
 
 func (d *Docker) Events() {

@@ -32,6 +32,7 @@ const (
 
 	NetworkList
 	NetworkSearch
+	NetworkDetail
 )
 
 type LogsView struct {
@@ -53,6 +54,7 @@ type model struct {
 	imageOptions     Options
 	networkList      table.Model
 	networkSearch    textinput.Model
+	networkDetail    viewport.Model
 	ready            bool
 	currentView      currentView
 	ContainerID      string
@@ -208,6 +210,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				networks := NewNetworkList(GetNetworkRows(m.dockerClient.Networks, value))
 				m.networkList = networks
 				m.currentView = NetworkList
+			case NetworkList:
+				network, err := m.dockerClient.GetNetworkByName(m.networkList.SelectedRow()[1])
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				nd, err := NewNetworkDetail(network, utils.CreateTable)
+				if err != nil {
+					fmt.Println(err)
+				}
+				m.networkDetail = nd
+				m.currentView = NetworkDetail
+
 			}
 
 		case "ctrl+f":
@@ -404,6 +419,8 @@ func (m model) View() string {
 			m.networkSearch.View(),
 			"(esc to back)",
 		) + "\n"
+	case NetworkDetail:
+		return m.networkDetail.View()
 
 	default:
 		return ""

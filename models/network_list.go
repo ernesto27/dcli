@@ -1,11 +1,11 @@
 package models
 
 import (
+	"dockerniceui/docker"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/docker/docker/api/types"
 )
 
 func NewNetworkList(rows []table.Row) table.Model {
@@ -40,13 +40,13 @@ func NewNetworkList(rows []table.Row) table.Model {
 	return t
 }
 
-func GetNetworkRows(networkList []types.NetworkResource, query string) []table.Row {
-	var filtered []types.NetworkResource
+func GetNetworkRows(networkList []docker.MyNetwork, query string) []table.Row {
+	var filtered []docker.MyNetwork
 	if query == "" {
 		filtered = networkList
 	} else {
 		for _, network := range networkList {
-			if strings.Contains(strings.ToLower(network.Name), strings.ToLower(query)) || strings.Contains(strings.ToLower(network.Driver), strings.ToLower(query)) {
+			if strings.Contains(strings.ToLower(network.Resource.Name), strings.ToLower(query)) {
 				filtered = append(filtered, network)
 			}
 		}
@@ -54,19 +54,13 @@ func GetNetworkRows(networkList []types.NetworkResource, query string) []table.R
 
 	var rows []table.Row
 	for _, network := range filtered {
-		subnet := ""
-		gateway := ""
-		if len(network.IPAM.Config) > 0 {
-			subnet = network.IPAM.Config[0].Subnet
-			gateway = network.IPAM.Config[0].Gateway
-		}
 
 		rows = append(rows, table.Row{
-			network.ID,
-			network.Name,
-			network.Driver,
-			subnet,
-			gateway,
+			network.Resource.ID,
+			network.Resource.Name,
+			network.Resource.Driver,
+			network.Subnet,
+			network.Gateway,
 		})
 	}
 
