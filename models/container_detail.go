@@ -6,11 +6,16 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/viewport"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 )
 
-func NewContainerDetail(container docker.MyContainer, createTable utils.CreateTableFunc) (viewport.Model, error) {
+type ContianerDetail struct {
+	viewport viewport.Model
+}
+
+func NewContainerDetail(container docker.MyContainer, createTable utils.CreateTableFunc) (ContianerDetail, error) {
 	content := getContent(container)
 
 	const width = 120
@@ -26,17 +31,34 @@ func NewContainerDetail(container docker.MyContainer, createTable utils.CreateTa
 		glamour.WithWordWrap(width),
 	)
 	if err != nil {
-		return viewport.Model{}, err
+		return ContianerDetail{}, err
 	}
 
 	str, err := renderer.Render(content)
 	if err != nil {
-		return viewport.Model{}, err
+		return ContianerDetail{}, err
 	}
 
 	vp.SetContent(str)
 
-	return vp, nil
+	return ContianerDetail{viewport: vp}, nil
+}
+
+func (cd ContianerDetail) View() string {
+	return cd.viewport.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
+}
+
+func (cd ContianerDetail) Update(msg tea.Msg, m *model) (viewport.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			m.setContainerList()
+		}
+	}
+
+	cd.viewport, _ = cd.viewport.Update(msg)
+	return cd.viewport, nil
 }
 
 func getContent(container docker.MyContainer) string {

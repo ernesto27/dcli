@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/table"
-	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,23 +15,23 @@ import (
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#9999FF")).Render
 
-type currentView int
+type currentModel int
 
 const (
-	ContainerList currentView = iota
-	ContainerDetail
-	ContainerSearch
-	ContainerLogs
-	ContainerOptions
+	MContainerList currentModel = iota
+	MContainerDetail
+	MContainerSearch
+	MContainerLogs
+	MContainerOptions
 
-	ImageList
-	ImageDetail
-	ImageSearch
-	ImageOptions
+	MImageList
+	MImageDetail
+	MImageSearch
+	MImageOptions
 
-	NetworkList
-	NetworkSearch
-	NetworkDetail
+	MNetworkList
+	MNetworkSearch
+	MNetworkDetail
 )
 
 type LogsView struct {
@@ -43,20 +42,20 @@ type LogsView struct {
 
 type model struct {
 	dockerClient     *docker.Docker
-	containerList    MyList
-	containerDetail  viewport.Model
-	containerSearch  textinput.Model
+	containerList    ContainerList
+	containerDetail  ContianerDetail
+	containerSearch  Search
 	containerLogs    LogsView
 	containerOptions Options
 	imageList        table.Model
 	imageDetail      viewport.Model
-	imageSearch      textinput.Model
+	imageSearch      Search
 	imageOptions     Options
 	networkList      table.Model
-	networkSearch    textinput.Model
+	networkSearch    Search
 	networkDetail    viewport.Model
 	ready            bool
-	currentView      currentView
+	currentModel     currentModel
 	ContainerID      string
 	dockerVersion    string
 	err              error
@@ -70,7 +69,7 @@ func NewModel(dockerClient *docker.Docker, version string) *model {
 		containerSearch: NewSearch(),
 		imageSearch:     NewSearch(),
 		networkSearch:   NewSearch(),
-		currentView:     ContainerList,
+		currentModel:    MContainerList,
 		dockerVersion:   version,
 	}
 	m.setContainerList()
@@ -92,39 +91,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			if m.currentView == ImageDetail || m.currentView == ImageOptions {
-				m.currentView = ImageList
+			if m.currentModel == MImageDetail || m.currentModel == MImageOptions {
+				m.currentModel = MImageList
 				return m, tea.ClearScreen
 			}
-
-			m.setContainerList()
-			return m, tea.ClearScreen
 
 		case "ctrl+c":
 			return m, tea.Quit
 		case "enter":
-			switch m.currentView {
-			case ContainerList:
-				container, err := m.dockerClient.GetContainerByName(m.containerList.table.SelectedRow()[1])
-				if err != nil {
-					fmt.Println(err)
-				}
-
-				vp, err := NewContainerDetail(container, utils.CreateTable)
-				if err != nil {
-					fmt.Println(err)
-				}
-
-				m.containerDetail = vp
-				m.currentView = ContainerDetail
-				return m, tea.ClearScreen
-			case ContainerSearch:
-				value := m.containerSearch.Value()
-				t := NewContainerList(GetContainerRows(m.dockerClient.Containers, value))
-				m.containerList = t
-				m.currentView = ContainerList
-				return m, tea.ClearScreen
-			case ContainerOptions:
+			switch m.currentModel {
+			case MContainerOptions:
 				errAction := false
 				switch m.containerOptions.Choices[m.containerOptions.Cursor] {
 				case Stop:
@@ -156,11 +132,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				if !errAction {
 					m.setContainerList()
-					m.currentView = ContainerList
+					m.currentModel = MContainerList
 					return m, tea.ClearScreen
 				}
 
-			case ImageList:
+			case MImageList:
 				img, err := m.dockerClient.GetImageByID(m.imageList.SelectedRow()[0])
 				if err != nil {
 					fmt.Println(err)
@@ -172,18 +148,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				m.imageDetail = imgView
-				m.currentView = ImageDetail
+				m.currentModel = MImageDetail
 
 				return m, tea.ClearScreen
 
-			case ImageSearch:
-				value := m.imageSearch.Value()
+			case MImageSearch:
+				value := m.imageSearch.textInput.Value()
 				imgList := NewImageList(GetImageRows(m.dockerClient.Images, value))
 				m.imageList = imgList
-				m.currentView = ImageList
+				m.currentModel = MImageList
 				return m, tea.ClearScreen
 
-			case ImageOptions:
+			case MImageOptions:
 				errAction := false
 				option := m.imageOptions.Choices[m.imageOptions.Cursor]
 
@@ -202,15 +178,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 
 					m.imageList = NewImageList(GetImageRows(images, ""))
-					m.currentView = ImageList
+					m.currentModel = MImageList
 					return m, tea.ClearScreen
 				}
-			case NetworkSearch:
-				value := m.networkSearch.Value()
+			case MNetworkSearch:
+				value := m.networkSearch.textInput.Value()
 				networks := NewNetworkList(GetNetworkRows(m.dockerClient.Networks, value))
 				m.networkList = networks
-				m.currentView = NetworkList
-			case NetworkList:
+				m.currentModel = MNetworkList
+			case MNetworkList:
 				network, err := m.dockerClient.GetNetworkByName(m.networkList.SelectedRow()[1])
 				if err != nil {
 					fmt.Println(err)
@@ -221,27 +197,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					fmt.Println(err)
 				}
 				m.networkDetail = nd
-				m.currentView = NetworkDetail
+				m.currentModel = MNetworkDetail
 
 			}
 
 		case "ctrl+f":
-			switch m.currentView {
-			case ContainerList:
-				m.containerSearch.SetValue("")
-				m.currentView = ContainerSearch
-			case ImageList:
-				m.imageSearch.SetValue("")
-				m.currentView = ImageSearch
-			case NetworkList:
-				m.networkSearch.SetValue("")
-				m.currentView = NetworkSearch
+			switch m.currentModel {
+			case MContainerList:
+				m.containerSearch.textInput.SetValue("")
+				m.currentModel = MContainerSearch
+			case MImageList:
+				m.imageSearch.textInput.SetValue("")
+				m.currentModel = MImageSearch
+			case MNetworkList:
+				m.networkSearch.textInput.SetValue("")
+				m.currentModel = MNetworkSearch
 			}
 
 			return m, tea.ClearScreen
 
 		case "ctrl+l":
-			if m.currentView == ContainerList {
+			if m.currentModel == MContainerList {
 				containerLogs, err := m.dockerClient.ContainerLogs(m.containerList.table.SelectedRow()[0])
 				if err != nil {
 					panic(err)
@@ -257,22 +233,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				m.containerLogs = lv
-				m.currentView = ContainerLogs
+				m.currentModel = MContainerLogs
 
 				return m, tea.ClearScreen
 			}
 
 		case "ctrl+o":
-			if m.currentView == ContainerList {
+			if m.currentModel == MContainerList {
 				ov := NewContainerOptions(m.containerList.table.SelectedRow()[1], m.containerList.table.SelectedRow()[2])
 				m.containerOptions = ov
-				m.currentView = ContainerOptions
+				m.currentModel = MContainerOptions
 				m.ContainerID = m.containerList.table.SelectedRow()[0]
 				return m, tea.ClearScreen
-			} else if m.currentView == ImageList {
+			} else if m.currentModel == MImageList {
 				ov := NewContainerOptions("", m.imageList.SelectedRow()[1])
 				m.imageOptions = ov
-				m.currentView = ImageOptions
+				m.currentModel = MImageOptions
 				return m, tea.ClearScreen
 			}
 
@@ -298,7 +274,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.imageList = NewImageList(GetImageRows(images, ""))
-			m.currentView = ImageList
+			m.currentModel = MImageList
 			return m, tea.ClearScreen
 
 		case "ctrl+n":
@@ -308,7 +284,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			m.networkList = NewNetworkList(GetNetworkRows(networks, ""))
-			m.currentView = NetworkList
+			m.currentModel = MNetworkList
 			return m, tea.ClearScreen
 
 		case "ctrl+r":
@@ -340,15 +316,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	}
 
-	m.containerList.table, _ = m.containerList.table.Update(msg)
-	m.containerDetail, _ = m.containerDetail.Update(msg)
-	m.containerSearch, _ = m.containerSearch.Update(msg)
+	m.containerList.table, _ = m.containerList.Update(msg, &m)
+	m.containerDetail.viewport, _ = m.containerDetail.Update(msg, &m)
+	m.containerSearch.textInput, _ = m.containerSearch.Update(msg, &m)
 	m.containerLogs.pager, _ = m.containerLogs.pager.Update(msg)
 	m.imageList, _ = m.imageList.Update(msg)
 	m.imageDetail, _ = m.imageDetail.Update(msg)
 	m.networkList, _ = m.networkList.Update(msg)
-	m.networkSearch, _ = m.networkSearch.Update(msg)
-	m.imageSearch, cmd = m.imageSearch.Update(msg)
+	m.networkSearch.textInput, _ = m.networkSearch.textInput.Update(msg)
+	m.imageSearch.textInput, cmd = m.imageSearch.textInput.Update(msg)
 
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -382,45 +358,47 @@ func (m model) View() string {
  NETWORKS ctrl/n: List
 	`
 
-	switch m.currentView {
-	case ContainerList:
+	switch m.currentModel {
+	case MContainerList:
 		// return baseStyle.Render(m.containerList.table.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
-		return m.containerList.Display()
-	case ContainerDetail:
-		return m.containerDetail.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
-	case ContainerSearch:
-		return fmt.Sprintf(
-			"Search container by name\n\n%s\n\n%s",
-			m.containerSearch.View(),
-			"(esc to back)",
-		) + "\n"
-	case ContainerLogs:
+		return m.containerList.View()
+	case MContainerDetail:
+		return m.containerDetail.View()
+		// return m.containerDetail.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
+	case MContainerSearch:
+		return m.containerSearch.View()
+		// return fmt.Sprintf(
+		// 	"Search container by name\n\n%s\n\n%s",
+		// 	m.containerSearch.textInput.View(),
+		// 	"(esc to back)",
+		// ) + "\n"
+	case MContainerLogs:
 		return fmt.Sprintf("%s\n%s\n%s", HeaderView(m.containerLogs.pager, m.containerLogs.container+" - "+m.containerLogs.image), m.containerLogs.pager.View(), FooterView(m.containerLogs.pager))
-	case ContainerOptions:
+	case MContainerOptions:
 		return m.containerOptions.View()
-	case ImageOptions:
+	case MImageOptions:
 		return m.imageOptions.View()
 
-	case ImageList:
+	case MImageList:
 		return baseStyle.Render(m.imageList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
-	case ImageDetail:
+	case MImageDetail:
 		return m.imageDetail.View()
-	case ImageSearch:
+	case MImageSearch:
 		return fmt.Sprintf(
 			"Search image by name\n\n%s\n\n%s",
-			m.imageSearch.View(),
+			m.imageSearch.textInput.View(),
 			"(esc to back)",
 		) + "\n"
 
-	case NetworkList:
+	case MNetworkList:
 		return baseStyle.Render(m.networkList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
-	case NetworkSearch:
+	case MNetworkSearch:
 		return fmt.Sprintf(
 			"Search network by name\n\n%s\n\n%s",
-			m.networkSearch.View(),
+			m.networkSearch.textInput.View(),
 			"(esc to back)",
 		) + "\n"
-	case NetworkDetail:
+	case MNetworkDetail:
 		return m.networkDetail.View()
 
 	default:
@@ -449,5 +427,5 @@ func (m *model) setContainerList() {
 	t := NewContainerList(GetContainerRows(m.dockerClient.Containers, ""))
 	m.err = nil
 	m.containerList = t
-	m.currentView = ContainerList
+	m.currentModel = MContainerList
 }
