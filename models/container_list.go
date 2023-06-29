@@ -15,7 +15,11 @@ const (
 	exited  = "exited"
 )
 
-func NewContainerList(rows []table.Row) table.Model {
+type MyList struct {
+	table table.Model
+}
+
+func NewContainerList(rows []table.Row) MyList {
 	columns := []table.Column{
 		{Title: "ID", Width: 20},
 		{Title: "Container", Width: 30},
@@ -45,7 +49,11 @@ func NewContainerList(rows []table.Row) table.Model {
 		Bold(false)
 	t.SetStyles(s)
 
-	return t
+	return MyList{table: t}
+}
+
+func (l MyList) Display() string {
+	return l.table.View()
 }
 
 func GetContainerRows(containerList []docker.MyContainer, query string) []table.Row {

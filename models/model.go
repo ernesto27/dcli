@@ -43,7 +43,7 @@ type LogsView struct {
 
 type model struct {
 	dockerClient     *docker.Docker
-	containerList    table.Model
+	containerList    MyList
 	containerDetail  viewport.Model
 	containerSearch  textinput.Model
 	containerLogs    LogsView
@@ -105,7 +105,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			switch m.currentView {
 			case ContainerList:
-				container, err := m.dockerClient.GetContainerByName(m.containerList.SelectedRow()[1])
+				container, err := m.dockerClient.GetContainerByName(m.containerList.table.SelectedRow()[1])
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -242,18 +242,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+l":
 			if m.currentView == ContainerList {
-				containerLogs, err := m.dockerClient.ContainerLogs(m.containerList.SelectedRow()[0])
+				containerLogs, err := m.dockerClient.ContainerLogs(m.containerList.table.SelectedRow()[0])
 				if err != nil {
 					panic(err)
 				}
 
-				headerHeight := lipgloss.Height(HeaderView(m.containerLogs.pager, m.containerList.SelectedRow()[1]))
+				headerHeight := lipgloss.Height(HeaderView(m.containerLogs.pager, m.containerList.table.SelectedRow()[1]))
 				p := NewContainerLogs(m.widthScreen, m.heightScreen, containerLogs, headerHeight)
 
 				lv := LogsView{
 					pager:     p,
-					container: m.containerList.SelectedRow()[1],
-					image:     m.containerList.SelectedRow()[2],
+					container: m.containerList.table.SelectedRow()[1],
+					image:     m.containerList.table.SelectedRow()[2],
 				}
 
 				m.containerLogs = lv
@@ -264,10 +264,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+o":
 			if m.currentView == ContainerList {
-				ov := NewContainerOptions(m.containerList.SelectedRow()[1], m.containerList.SelectedRow()[2])
+				ov := NewContainerOptions(m.containerList.table.SelectedRow()[1], m.containerList.table.SelectedRow()[2])
 				m.containerOptions = ov
 				m.currentView = ContainerOptions
-				m.ContainerID = m.containerList.SelectedRow()[0]
+				m.ContainerID = m.containerList.table.SelectedRow()[0]
 				return m, tea.ClearScreen
 			} else if m.currentView == ImageList {
 				ov := NewContainerOptions("", m.imageList.SelectedRow()[1])
@@ -289,7 +289,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "ctrl+e":
-			return m, attachToContainer(m.containerList.SelectedRow()[0])
+			return m, attachToContainer(m.containerList.table.SelectedRow()[0])
 
 		case "ctrl+b":
 			images, err := m.dockerClient.ImageList()
@@ -340,7 +340,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	}
 
-	m.containerList, _ = m.containerList.Update(msg)
+	m.containerList.table, _ = m.containerList.table.Update(msg)
 	m.containerDetail, _ = m.containerDetail.Update(msg)
 	m.containerSearch, _ = m.containerSearch.Update(msg)
 	m.containerLogs.pager, _ = m.containerLogs.pager.Update(msg)
@@ -384,7 +384,8 @@ func (m model) View() string {
 
 	switch m.currentView {
 	case ContainerList:
-		return baseStyle.Render(m.containerList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
+		// return baseStyle.Render(m.containerList.table.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
+		return m.containerList.Display()
 	case ContainerDetail:
 		return m.containerDetail.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
 	case ContainerSearch:
