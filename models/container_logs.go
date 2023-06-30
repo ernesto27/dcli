@@ -22,11 +22,19 @@ var (
 	}()
 )
 
-func NewContainerLogs(width int, height int, logs string, headerHeight int) viewport.Model {
+type LogsView struct {
+	pager     viewport.Model
+	container string
+	image     string
+}
+
+func NewContainerLogs(width int, height int, logs string, headerHeight int) LogsView {
 	p := viewport.New(width, height)
 	p.YPosition = headerHeight + 1
 	p.SetContent(logs)
-	return p
+	return LogsView{
+		pager: p,
+	}
 }
 
 func HeaderView(pager viewport.Model, text string) string {

@@ -2,13 +2,20 @@ package models
 
 import (
 	"dockerniceui/docker"
+	"dockerniceui/utils"
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-func NewNetworkList(rows []table.Row) table.Model {
+type NetworkList struct {
+	table table.Model
+}
+
+func NewNetworkList(networkList []docker.MyNetwork, query string) NetworkList {
 	columns := []table.Column{
 		{Title: "ID", Width: 20},
 		{Title: "Name", Width: 40},
@@ -16,6 +23,8 @@ func NewNetworkList(rows []table.Row) table.Model {
 		{Title: "IP Subnet", Width: 20},
 		{Title: "IP Gateway", Width: 20},
 	}
+
+	rows := GetNetworkRows(networkList, query)
 
 	t := table.New(
 		table.WithColumns(columns),
@@ -37,7 +46,38 @@ func NewNetworkList(rows []table.Row) table.Model {
 		Bold(false)
 	t.SetStyles(s)
 
-	return t
+	return NetworkList{table: t}
+}
+
+func (nl NetworkList) View(commands string, dockerVersion string) string {
+	return baseStyle.Render(nl.table.View()) + helpStyle("\n DockerVersion: "+dockerVersion+" \n"+commands)
+}
+
+func (cl NetworkList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
+	cl.table, _ = m.networkList.table.Update(msg)
+	if m.currentModel != MNetworkList {
+		return cl.table, nil
+	}
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			network, err := m.dockerClient.GetNetworkByName(m.networkList.table.SelectedRow()[1])
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			nd, err := NewNetworkDetail(network, utils.CreateTable)
+			if err != nil {
+				fmt.Println(err)
+			}
+			m.networkDetail = nd
+			m.currentModel = MNetworkDetail
+		}
+	}
+
+	return cl.table, nil
 }
 
 func GetNetworkRows(networkList []docker.MyNetwork, query string) []table.Row {

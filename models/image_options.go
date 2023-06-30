@@ -3,20 +3,19 @@ package models
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-type ContainerOptions struct {
+type ImageOptions struct {
 	Options
 }
 
-func NewContainerOptions(container string, image string) ContainerOptions {
-	choices := []string{Stop, Start, Remove, Restart}
+func NewImageOptions(container string, image string) ImageOptions {
+	choices := []string{Remove}
 
-	return ContainerOptions{
+	return ImageOptions{
 		Options{
 			Cursor:    0,
 			Choice:    "",
@@ -27,7 +26,7 @@ func NewContainerOptions(container string, image string) ContainerOptions {
 	}
 }
 
-func (o ContainerOptions) View() string {
+func (o ImageOptions) View() string {
 	s := strings.Builder{}
 
 	var style = lipgloss.NewStyle().
@@ -59,38 +58,20 @@ func (o ContainerOptions) View() string {
 	return style.Render(options) + s.String()
 }
 
-func (o ContainerOptions) Update(msg tea.Msg, m *model) (ContainerOptions, tea.Cmd) {
+func (o ImageOptions) Update(msg tea.Msg, m *model) (ImageOptions, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if m.currentModel != MContainerOptions {
+			if m.currentModel != MImageOptions {
 				return o, nil
 			}
 
 			errAction := false
-			switch m.containerOptions.Choices[m.containerOptions.Cursor] {
-			case Stop:
-				err := m.dockerClient.ContainerStop(m.ContainerID)
-				if err != nil {
-					fmt.Println(err)
-					errAction = true
-				}
-				time.Sleep(1 * time.Second)
-			case Start:
-				err := m.dockerClient.ContainerStart(m.ContainerID)
-				if err != nil {
-					fmt.Println(err)
-					errAction = true
-				}
-			case Remove:
-				err := m.dockerClient.ContainerRemove(m.ContainerID)
-				if err != nil {
-					fmt.Println(err)
-					errAction = true
-				}
-			case Restart:
-				err := m.dockerClient.ContainerRestart(m.ContainerID)
+			option := m.imageOptions.Choices[m.imageOptions.Cursor]
+
+			if option == Remove {
+				err := m.dockerClient.ImageRemove(m.imageList.table.SelectedRow()[1])
 				if err != nil {
 					fmt.Println(err)
 					errAction = true
@@ -98,9 +79,13 @@ func (o ContainerOptions) Update(msg tea.Msg, m *model) (ContainerOptions, tea.C
 			}
 
 			if !errAction {
-				m.setContainerList()
-				m.currentModel = MContainerList
-				return o, tea.ClearScreen
+				images, err := m.dockerClient.ImageList()
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				m.imageList = NewImageList(images, "")
+				m.currentModel = MImageList
 			}
 
 		}
