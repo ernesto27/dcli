@@ -41,7 +41,7 @@ const (
 type model struct {
 	dockerClient     *docker.Docker
 	containerList    ContainerList
-	containerDetail  ContianerDetail
+	containerDetail  ContainerDetail
 	containerSearch  ContainerSearch
 	containerLogs    LogsView
 	containerOptions ContainerOptions
@@ -101,160 +101,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+c":
 			return m, tea.Quit
-		// case "enter":
-		// 	switch m.currentModel {
-		// 	case MContainerOptions:
-		// 		errAction := false
-		// 		switch m.containerOptions.Choices[m.containerOptions.Cursor] {
-		// 		case Stop:
-		// 			err := m.dockerClient.ContainerStop(m.ContainerID)
-		// 			if err != nil {
-		// 				fmt.Println(err)
-		// 				errAction = true
-		// 			}
-		// 			time.Sleep(1 * time.Second)
-		// 		case Start:
-		// 			err := m.dockerClient.ContainerStart(m.ContainerID)
-		// 			if err != nil {
-		// 				fmt.Println(err)
-		// 				errAction = true
-		// 			}
-		// 		case Remove:
-		// 			err := m.dockerClient.ContainerRemove(m.ContainerID)
-		// 			if err != nil {
-		// 				fmt.Println(err)
-		// 				errAction = true
-		// 			}
-		// 		case Restart:
-		// 			err := m.dockerClient.ContainerRestart(m.ContainerID)
-		// 			if err != nil {
-		// 				fmt.Println(err)
-		// 				errAction = true
-		// 			}
-		// 		}
-
-		// 		if !errAction {
-		// 			m.setContainerList()
-		// 			m.currentModel = MContainerList
-		// 			return m, tea.ClearScreen
-		// 		}
-
-		// 	case MImageList:
-		// 		img, err := m.dockerClient.GetImageByID(m.imageList.SelectedRow()[0])
-		// 		if err != nil {
-		// 			fmt.Println(err)
-		// 		}
-
-		// 		imgView, err := NewImageDetail(img, utils.CreateTable)
-		// 		if err != nil {
-		// 			fmt.Println(err)
-		// 		}
-
-		// 		m.imageDetail = imgView
-		// 		m.currentModel = MImageDetail
-
-		// 		return m, tea.ClearScreen
-
-		// 	case MImageSearch:
-		// 		value := m.imageSearch.textInput.Value()
-		// 		imgList := NewImageList(GetImageRows(m.dockerClient.Images, value))
-		// 		m.imageList = imgList
-		// 		m.currentModel = MImageList
-		// 		return m, tea.ClearScreen
-
-		// 	case MImageOptions:
-		// 		errAction := false
-		// 		option := m.imageOptions.Choices[m.imageOptions.Cursor]
-
-		// 		if option == Remove {
-		// 			err := m.dockerClient.ImageRemove(m.imageList.SelectedRow()[1])
-		// 			if err != nil {
-		// 				fmt.Println(err)
-		// 				errAction = true
-		// 			}
-		// 		}
-
-		// 		if !errAction {
-		// 			images, err := m.dockerClient.ImageList()
-		// 			if err != nil {
-		// 				fmt.Println(err)
-		// 			}
-
-		// 			m.imageList = NewImageList(GetImageRows(images, ""))
-		// 			m.currentModel = MImageList
-		// 			return m, tea.ClearScreen
-		// 		}
-		// 	case MNetworkSearch:
-		// 		value := m.networkSearch.textInput.Value()
-		// 		networks := NewNetworkList(GetNetworkRows(m.dockerClient.Networks, value))
-		// 		m.networkList = networks
-		// 		m.currentModel = MNetworkList
-		// 	case MNetworkList:
-		// 		network, err := m.dockerClient.GetNetworkByName(m.networkList.SelectedRow()[1])
-		// 		if err != nil {
-		// 			fmt.Println(err)
-		// 		}
-
-		// 		nd, err := NewNetworkDetail(network, utils.CreateTable)
-		// 		if err != nil {
-		// 			fmt.Println(err)
-		// 		}
-		// 		m.networkDetail = nd
-		// 		m.currentModel = MNetworkDetail
-
-		// 	}
-
-		// case "ctrl+f":
-		// 	switch m.currentModel {
-		// 	// case MContainerList:
-		// 	// 	m.containerSearch.textInput.SetValue("")
-		// 	// 	m.currentModel = MContainerSearch
-		// 	case MImageList:
-		// 		m.imageSearch.textInput.SetValue("")
-		// 		m.currentModel = MImageSearch
-		// 	case MNetworkList:
-		// 		m.networkSearch.textInput.SetValue("")
-		// 		m.currentModel = MNetworkSearch
-		// 	}
-
-		// 	return m, tea.ClearScreen
-
-		// case "ctrl+l":
-		// 	if m.currentModel == MContainerList {
-		// 		containerLogs, err := m.dockerClient.ContainerLogs(m.containerList.table.SelectedRow()[0])
-		// 		if err != nil {
-		// 			panic(err)
-		// 		}
-
-		// 		headerHeight := lipgloss.Height(HeaderView(m.containerLogs.pager, m.containerList.table.SelectedRow()[1]))
-		// 		p := NewContainerLogs(m.widthScreen, m.heightScreen, containerLogs, headerHeight)
-
-		// 		lv := LogsView{
-		// 			pager:     p.pager,
-		// 			container: m.containerList.table.SelectedRow()[1],
-		// 			image:     m.containerList.table.SelectedRow()[2],
-		// 		}
-
-		// 		m.containerLogs = lv
-		// 		m.currentModel = MContainerLogs
-
-		// 		return m, tea.ClearScreen
-		// 	}
-
-		// case "ctrl+o":
-		// 	if m.currentModel == MContainerList {
-		// 		// ov := NewContainerOptions(m.containerList.table.SelectedRow()[1], m.containerList.table.SelectedRow()[2])
-		// 		// m.containerOptions = ov
-		// 		// m.currentModel = MContainerOptions
-		// 		// m.ContainerID = m.containerList.table.SelectedRow()[0]
-		// 		// return m, tea.ClearScreen
-		// 	} else if m.currentModel == MImageList {
-		// 		ov := NewContainerOptions("", m.imageList.SelectedRow()[1])
-		// 		m.imageOptions = ov
-		// 		m.currentModel = MImageOptions
-		// 		return m, tea.ClearScreen
-		// 	}
-
 		case "down":
 			m.containerOptions.Cursor++
 			if m.containerOptions.Cursor >= len(m.containerOptions.Choices) {
@@ -269,26 +115,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "ctrl+e":
 			return m, attachToContainer(m.containerList.table.SelectedRow()[0])
-
-		// case "ctrl+b":
-		// 	images, err := m.dockerClient.ImageList()
-		// 	if err != nil {
-		// 		fmt.Println(err)
-		// 	}
-
-		// 	m.imageList = NewImageList(GetImageRows(images, ""))
-		// 	m.currentModel = MImageList
-		// 	return m, tea.ClearScreen
-
-		// case "ctrl+n":
-		// 	networks, err := m.dockerClient.NetworkList()
-		// 	if err != nil {
-		// 		fmt.Println(err)
-		// 	}
-
-		// 	m.networkList = NewNetworkList(GetNetworkRows(networks, ""))
-		// 	m.currentModel = MNetworkList
-		// 	return m, tea.ClearScreen
 
 		case "ctrl+r":
 			m.setContainerList()
@@ -362,9 +188,7 @@ func (m model) View() string {
 	case MContainerList:
 		return m.containerList.View(commands, m.dockerVersion)
 	case MContainerDetail:
-		fmt.Println("Container detail")
 		return m.containerDetail.View()
-		// return m.containerDetail.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
 	case MContainerSearch:
 		return m.containerSearch.View()
 	case MContainerLogs:
@@ -380,15 +204,9 @@ func (m model) View() string {
 		return m.imageDetail.View()
 	case MImageSearch:
 		return m.imageSearch.View()
-		// return fmt.Sprintf(
-		// 	"Search image by name\n\n%s\n\n%s",
-		// 	m.imageSearch.textInput.View(),
-		// 	"(esc to back)",
-		// ) + "\n"s
 
 	case MNetworkList:
 		return m.networkList.View(commands, m.dockerVersion)
-		// return baseStyle.Render(m.networkList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
 	case MNetworkSearch:
 		return fmt.Sprintf(
 			"Search network by name\n\n%s\n\n%s",
@@ -402,9 +220,6 @@ func (m model) View() string {
 		return ""
 
 	}
-
-	return ""
-
 }
 
 type attachExited struct{ err error }

@@ -11,11 +11,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type ContianerDetail struct {
+type ContainerDetail struct {
 	viewport viewport.Model
 }
 
-func NewContainerDetail(container docker.MyContainer, createTable utils.CreateTableFunc) (ContianerDetail, error) {
+func NewContainerDetail(container docker.MyContainer, createTable utils.CreateTableFunc) (ContainerDetail, error) {
 	content := getContent(container)
 
 	const width = 120
@@ -31,24 +31,24 @@ func NewContainerDetail(container docker.MyContainer, createTable utils.CreateTa
 		glamour.WithWordWrap(width),
 	)
 	if err != nil {
-		return ContianerDetail{}, err
+		return ContainerDetail{}, err
 	}
 
 	str, err := renderer.Render(content)
 	if err != nil {
-		return ContianerDetail{}, err
+		return ContainerDetail{}, err
 	}
 
 	vp.SetContent(str)
 
-	return ContianerDetail{viewport: vp}, nil
+	return ContainerDetail{viewport: vp}, nil
 }
 
-func (cd ContianerDetail) View() string {
+func (cd ContainerDetail) View() string {
 	return cd.viewport.View() + helpStyle("\n  ↑/↓: Navigate • Esc: back to list\n")
 }
 
-func (cd ContianerDetail) Update(msg tea.Msg, m *model) (viewport.Model, tea.Cmd) {
+func (cd ContainerDetail) Update(msg tea.Msg, m *model) (viewport.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {

@@ -59,13 +59,15 @@ func (cl ContainerList) View(commands string, dockerVersion string) string {
 }
 
 func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
+	cl.table, _ = cl.table.Update(msg)
+	if m.currentModel != MContainerList {
+		return cl.table, nil
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if m.currentModel != MContainerList {
-				return cl.table, nil
-			}
 			container, err := m.dockerClient.GetContainerByName(m.containerList.table.SelectedRow()[1])
 			if err != nil {
 				fmt.Println(err)
@@ -79,23 +81,14 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 			m.currentModel = MContainerDetail
 			return cl.table, nil
 		case "ctrl+f":
-			if m.currentModel != MContainerList {
-				return cl.table, nil
-			}
 			m.containerSearch.textInput.SetValue("")
 			m.currentModel = MContainerSearch
 		case "ctrl+o":
-			if m.currentModel != MContainerList {
-				return cl.table, nil
-			}
 			ov := NewContainerOptions(m.containerList.table.SelectedRow()[1], m.containerList.table.SelectedRow()[2])
 			m.containerOptions = ov
 			m.currentModel = MContainerOptions
 			m.ContainerID = m.containerList.table.SelectedRow()[0]
 		case "ctrl+l":
-			if m.currentModel != MContainerList {
-				return cl.table, nil
-			}
 			containerLogs, err := m.dockerClient.ContainerLogs(m.containerList.table.SelectedRow()[0])
 			if err != nil {
 				panic(err)
@@ -108,9 +101,6 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 			m.containerLogs = lv
 			m.currentModel = MContainerLogs
 		case "ctrl+b":
-			if m.currentModel != MContainerList {
-				return cl.table, nil
-			}
 			images, err := m.dockerClient.ImageList()
 			if err != nil {
 				fmt.Println(err)
@@ -128,8 +118,6 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 			m.currentModel = MNetworkList
 		}
 	}
-
-	cl.table, _ = cl.table.Update(msg)
 
 	return cl.table, nil
 }
