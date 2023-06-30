@@ -54,12 +54,11 @@ func NewContainerList(rows []table.Row) ContainerList {
 	return ContainerList{table: t}
 }
 
-func (cl ContainerList) View() string {
-	return cl.table.View()
+func (cl ContainerList) View(commands string, dockerVersion string) string {
+	return baseStyle.Render(cl.table.View()) + helpStyle("\n DockerVersion: "+dockerVersion+" \n"+commands)
 }
 
 func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -78,7 +77,47 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 
 			m.containerDetail = vp
 			m.currentModel = MContainerDetail
+			return cl.table, nil
+		case "ctrl+f":
+			if m.currentModel != MContainerList {
+				return cl.table, nil
+			}
+			m.containerSearch.textInput.SetValue("")
+			m.currentModel = MContainerSearch
+		case "ctrl+o":
+			if m.currentModel != MContainerList {
+				return cl.table, nil
+			}
+			ov := NewContainerOptions(m.containerList.table.SelectedRow()[1], m.containerList.table.SelectedRow()[2])
+			m.containerOptions = ov
+			m.currentModel = MContainerOptions
+			m.ContainerID = m.containerList.table.SelectedRow()[0]
+		case "ctrl+l":
+			if m.currentModel != MContainerList {
+				return cl.table, nil
+			}
+			containerLogs, err := m.dockerClient.ContainerLogs(m.containerList.table.SelectedRow()[0])
+			if err != nil {
+				panic(err)
+			}
 
+			headerHeight := lipgloss.Height(HeaderView(m.containerLogs.pager, m.containerList.table.SelectedRow()[1]))
+			lv := NewContainerLogs(m.widthScreen, m.heightScreen, containerLogs, headerHeight)
+			lv.container = m.containerList.table.SelectedRow()[1]
+			lv.image = m.containerList.table.SelectedRow()[2]
+			m.containerLogs = lv
+			m.currentModel = MContainerLogs
+		case "ctrl+n":
+			if m.currentModel != MContainerList {
+				return cl.table, nil
+			}
+			images, err := m.dockerClient.ImageList()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			m.imageList = NewImageList(images, "")
+			m.currentModel = MImageList
 		}
 	}
 

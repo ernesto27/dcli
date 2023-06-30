@@ -36,13 +36,7 @@ func (s Search) Update(msg tea.Msg, m *model) (textinput.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if m.currentModel != MContainerSearch {
-				return s.textInput, nil
-			}
-			value := m.containerSearch.textInput.Value()
-			t := NewContainerList(GetContainerRows(m.dockerClient.Containers, value))
-			m.containerList = t
-			m.currentModel = MContainerList
+
 		}
 	}
 

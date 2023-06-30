@@ -3,7 +3,9 @@ package models
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -67,4 +69,54 @@ func (o Options) View() string {
 	}
 
 	return style.Render(options) + s.String()
+}
+
+func (o Options) Update(msg tea.Msg, m *model) (Options, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			if m.currentModel != MContainerOptions {
+				return o, nil
+			}
+
+			errAction := false
+			switch m.containerOptions.Choices[m.containerOptions.Cursor] {
+			case Stop:
+				err := m.dockerClient.ContainerStop(m.ContainerID)
+				if err != nil {
+					fmt.Println(err)
+					errAction = true
+				}
+				time.Sleep(1 * time.Second)
+			case Start:
+				err := m.dockerClient.ContainerStart(m.ContainerID)
+				if err != nil {
+					fmt.Println(err)
+					errAction = true
+				}
+			case Remove:
+				err := m.dockerClient.ContainerRemove(m.ContainerID)
+				if err != nil {
+					fmt.Println(err)
+					errAction = true
+				}
+			case Restart:
+				err := m.dockerClient.ContainerRestart(m.ContainerID)
+				if err != nil {
+					fmt.Println(err)
+					errAction = true
+				}
+			}
+
+			if !errAction {
+				m.setContainerList()
+				m.currentModel = MContainerList
+				return o, tea.ClearScreen
+			}
+
+		}
+	}
+
+	return o, nil
 }

@@ -2,19 +2,28 @@ package models
 
 import (
 	"dockerniceui/docker"
+	"dockerniceui/utils"
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-func NewImageList(rows []table.Row) table.Model {
+type ImageList struct {
+	table table.Model
+}
+
+func NewImageList(images []docker.MyImage, query string) ImageList {
 	columns := []table.Column{
 		{Title: "ID", Width: 20},
 		{Title: "Image", Width: 40},
 		{Title: "Size", Width: 20},
 		{Title: "Created", Width: 20},
 	}
+
+	rows := GetImageRows(images, query)
 
 	t := table.New(
 		table.WithColumns(columns),
@@ -36,7 +45,48 @@ func NewImageList(rows []table.Row) table.Model {
 		Bold(false)
 	t.SetStyles(s)
 
-	return t
+	return ImageList{table: t}
+}
+
+func (il ImageList) View(commands string, dockerVersion string) string {
+	return baseStyle.Render(il.table.View()) + helpStyle("\n DockerVersion: "+dockerVersion+" \n"+commands)
+}
+
+func (il ImageList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			if m.currentModel != MImageList {
+				return il.table, nil
+			}
+
+			img, err := m.dockerClient.GetImageByID(m.imageList.table.SelectedRow()[0])
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			imgView, err := NewImageDetail(img, utils.CreateTable)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			m.imageDetail = imgView
+			m.currentModel = MImageDetail
+		case "ctrl+f":
+			if m.currentModel != MImageList {
+				return il.table, nil
+			}
+
+			m.imageSearch.textInput.SetValue("")
+			m.currentModel = MImageSearch
+
+		}
+	}
+
+	il.table, _ = il.table.Update(msg)
+	return il.table, nil
+
 }
 
 func GetImageRows(images []docker.MyImage, query string) []table.Row {
