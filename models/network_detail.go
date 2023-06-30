@@ -76,5 +76,7 @@ func getContentNetwork(network docker.MyNetwork) string {
 			{"Gateway", network.Gateway},
 		})
 
+	response += "# Containers\n" + network.Containers[0].Name
+
 	return response
 }

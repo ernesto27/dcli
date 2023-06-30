@@ -24,11 +24,12 @@ type Docker struct {
 }
 
 type MyNetwork struct {
-	Name      string
-	IPAddress string
-	Gateway   string
-	Subnet    string
-	Resource  types.NetworkResource
+	Name       string
+	IPAddress  string
+	Gateway    string
+	Subnet     string
+	Resource   types.NetworkResource
+	Containers []types.ContainerJSON
 }
 
 type MyContainer struct {
@@ -334,10 +335,22 @@ func (d *Docker) NetworkList() ([]MyNetwork, error) {
 			gateway = n.IPAM.Config[0].Gateway
 		}
 
+		network, err := d.cli.NetworkInspect(context.Background(), n.ID, types.NetworkInspectOptions{})
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		var containers []types.ContainerJSON
+		for containerID := range network.Containers {
+			container, _ := d.cli.ContainerInspect(context.Background(), containerID)
+			containers = append(containers, container)
+		}
+
 		myNetwork = append(myNetwork, MyNetwork{
-			Resource: n,
-			Gateway:  gateway,
-			Subnet:   subnet,
+			Resource:   network,
+			Gateway:    gateway,
+			Subnet:     subnet,
+			Containers: containers,
 		})
 	}
 
