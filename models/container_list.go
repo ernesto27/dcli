@@ -107,7 +107,7 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 			lv.image = m.containerList.table.SelectedRow()[2]
 			m.containerLogs = lv
 			m.currentModel = MContainerLogs
-		case "ctrl+n":
+		case "ctrl+b":
 			if m.currentModel != MContainerList {
 				return cl.table, nil
 			}
@@ -118,6 +118,14 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 
 			m.imageList = NewImageList(images, "")
 			m.currentModel = MImageList
+		case "ctrl+n":
+			networks, err := m.dockerClient.NetworkList()
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			m.networkList = NewNetworkList(networks, "")
+			m.currentModel = MNetworkList
 		}
 	}
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -43,14 +42,14 @@ type model struct {
 	dockerClient     *docker.Docker
 	containerList    ContainerList
 	containerDetail  ContianerDetail
-	containerSearch  Search
+	containerSearch  ContainerSearch
 	containerLogs    LogsView
-	containerOptions Options
+	containerOptions ContainerOptions
 	imageList        ImageList
 	imageDetail      viewport.Model
-	imageSearch      Search
-	imageOptions     Options
-	networkList      table.Model
+	imageSearch      ImageSearch
+	imageOptions     ImageOptions
+	networkList      NetworkList
 	networkSearch    Search
 	networkDetail    viewport.Model
 	ready            bool
@@ -65,8 +64,8 @@ type model struct {
 func NewModel(dockerClient *docker.Docker, version string) *model {
 	m := &model{
 		dockerClient:    dockerClient,
-		containerSearch: NewSearch(),
-		imageSearch:     NewSearch(),
+		containerSearch: NewContainerSearch(),
+		imageSearch:     NewImageSearch(),
 		networkSearch:   NewSearch(),
 		currentModel:    MContainerList,
 		dockerVersion:   version,
@@ -92,6 +91,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "esc":
 			if m.currentModel == MImageDetail || m.currentModel == MImageOptions {
 				m.currentModel = MImageList
+				return m, tea.ClearScreen
+			}
+
+			if m.currentModel == MNetworkDetail {
+				m.currentModel = MNetworkList
 				return m, tea.ClearScreen
 			}
 
@@ -317,15 +321,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.containerList.table, _ = m.containerList.Update(msg, &m)
 	m.containerDetail.viewport, _ = m.containerDetail.Update(msg, &m)
-	m.containerSearch.textInput, _ = m.containerSearch.Update(msg, &m)
+	m.containerSearch, _ = m.containerSearch.Update(msg, &m)
 	m.containerOptions, _ = m.containerOptions.Update(msg, &m)
 	m.containerLogs.pager, _ = m.containerLogs.pager.Update(msg)
+
 	m.imageList.table, _ = m.imageList.Update(msg, &m)
-	m.imageSearch.textInput, _ = m.imageSearch.Update(msg, &m)
+	m.imageSearch, _ = m.imageSearch.Update(msg, &m)
+	m.imageOptions, _ = m.imageOptions.Update(msg, &m)
 	m.imageDetail, _ = m.imageDetail.Update(msg)
-	m.networkList, _ = m.networkList.Update(msg)
+
+	m.networkList.table, _ = m.networkList.Update(msg, &m)
 	m.networkSearch.textInput, _ = m.networkSearch.textInput.Update(msg)
-	m.imageSearch.textInput, cmd = m.imageSearch.textInput.Update(msg)
 
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -373,14 +379,16 @@ func (m model) View() string {
 	case MImageDetail:
 		return m.imageDetail.View()
 	case MImageSearch:
-		return fmt.Sprintf(
-			"Search image by name\n\n%s\n\n%s",
-			m.imageSearch.textInput.View(),
-			"(esc to back)",
-		) + "\n"
+		return m.imageSearch.View()
+		// return fmt.Sprintf(
+		// 	"Search image by name\n\n%s\n\n%s",
+		// 	m.imageSearch.textInput.View(),
+		// 	"(esc to back)",
+		// ) + "\n"s
 
 	case MNetworkList:
-		return baseStyle.Render(m.networkList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
+		return m.networkList.View(commands, m.dockerVersion)
+		// return baseStyle.Render(m.networkList.View()) + helpStyle("\n DockerVersion: "+m.dockerVersion+" \n"+commands)
 	case MNetworkSearch:
 		return fmt.Sprintf(
 			"Search network by name\n\n%s\n\n%s",
@@ -394,6 +402,8 @@ func (m model) View() string {
 		return ""
 
 	}
+
+	return ""
 
 }
 

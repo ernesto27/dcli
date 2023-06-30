@@ -53,14 +53,15 @@ func (il ImageList) View(commands string, dockerVersion string) string {
 }
 
 func (il ImageList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
+	il.table, _ = il.table.Update(msg)
+	if m.currentModel != MImageList {
+		return il.table, nil
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if m.currentModel != MImageList {
-				return il.table, nil
-			}
-
 			img, err := m.dockerClient.GetImageByID(m.imageList.table.SelectedRow()[0])
 			if err != nil {
 				fmt.Println(err)
@@ -74,17 +75,16 @@ func (il ImageList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 			m.imageDetail = imgView
 			m.currentModel = MImageDetail
 		case "ctrl+f":
-			if m.currentModel != MImageList {
-				return il.table, nil
-			}
-
 			m.imageSearch.textInput.SetValue("")
 			m.currentModel = MImageSearch
+		case "ctrl+o":
+			ov := NewImageOptions("", m.imageList.table.SelectedRow()[1])
+			m.imageOptions = ov
+			m.currentModel = MImageOptions
 
 		}
 	}
 
-	il.table, _ = il.table.Update(msg)
 	return il.table, nil
 
 }
