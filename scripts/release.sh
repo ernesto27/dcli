@@ -7,4 +7,3 @@ git push origin $1
 
 echo "Create and upload release"
 goreleaser --clean
-goreleaser release
