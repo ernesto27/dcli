@@ -84,7 +84,7 @@ func TestGetContainerName(t *testing.T) {
 			args: args{
 				names: []string{"/container_name"},
 			},
-			want: "/container_name",
+			want: "container_name",
 		},
 		{
 			name: "should get empty string args is empty",
