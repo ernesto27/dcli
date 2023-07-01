@@ -76,7 +76,18 @@ func getContentNetwork(network docker.MyNetwork) string {
 			{"Gateway", network.Gateway},
 		})
 
-	response += "# Containers\n" + network.Containers[0].Name
+	if len(network.Containers) > 0 {
+		columns := []string{"Name", "IPv4 Address"}
+
+		rows := [][]string{}
+		for _, container := range network.Containers {
+			rows = append(rows, []string{container.Name, container.Network.IPAddress})
+		}
+
+		response += "\n\n"
+		response += utils.CreateTable("# Containers", columns, rows)
+
+	}
 
 	return response
 }

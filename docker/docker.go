@@ -29,7 +29,7 @@ type MyNetwork struct {
 	Gateway    string
 	Subnet     string
 	Resource   types.NetworkResource
-	Containers []types.ContainerJSON
+	Containers []MyContainer
 }
 
 type MyContainer struct {
@@ -145,19 +145,12 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 			continue
 		}
 
-		var name string
-		if len(c.Names) > 0 {
-			name = c.Names[0][1:]
-		}
-
+		name := d.getContainerName(c.Names)
 		networkSettings := cJSON.NetworkSettings
 		networkMode := string(cJSON.HostConfig.NetworkMode)
 
 		defaultNetwork := "default"
-		ipAddress := networkSettings.IPAddress
-		if networkMode != defaultNetwork {
-			ipAddress = networkSettings.Networks[networkMode].IPAddress
-		}
+		ipAddress := d.getContainerIP(cJSON)
 
 		gateway := networkSettings.Gateway
 		if networkMode != defaultNetwork {
@@ -188,6 +181,13 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 
 	}
 	return mc, nil
+}
+
+func (d *Docker) getContainerName(names []string) string {
+	if len(names) > 0 {
+		return names[0][1:]
+	}
+	return ""
 }
 
 func (d *Docker) GetContainerByName(name string) (MyContainer, error) {
@@ -340,10 +340,18 @@ func (d *Docker) NetworkList() ([]MyNetwork, error) {
 			fmt.Println(err)
 		}
 
-		var containers []types.ContainerJSON
+		containers := []MyContainer{}
 		for containerID := range network.Containers {
-			container, _ := d.cli.ContainerInspect(context.Background(), containerID)
-			containers = append(containers, container)
+			container, _, err := d.cli.ContainerInspectWithRaw(context.Background(), containerID, true)
+			if err == nil {
+				n := MyNetwork{
+					IPAddress: d.getContainerIP(container),
+				}
+				containers = append(containers, MyContainer{
+					Name:    d.getContainerName([]string{container.Name}),
+					Network: n,
+				})
+			}
 		}
 
 		myNetwork = append(myNetwork, MyNetwork{
@@ -357,6 +365,18 @@ func (d *Docker) NetworkList() ([]MyNetwork, error) {
 	d.Networks = myNetwork
 
 	return myNetwork, nil
+}
+
+func (d *Docker) getContainerIP(c types.ContainerJSON) string {
+	networkSettings := c.NetworkSettings
+	networkMode := string(c.HostConfig.NetworkMode)
+
+	defaultNetwork := "default"
+	ipAddress := networkSettings.IPAddress
+	if networkMode != defaultNetwork {
+		ipAddress = networkSettings.Networks[networkMode].IPAddress
+	}
+	return ipAddress
 }
 
 func (d *Docker) GetNetworkByName(name string) (MyNetwork, error) {
