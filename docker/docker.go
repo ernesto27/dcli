@@ -367,6 +367,10 @@ func (d *Docker) NetworkList() ([]MyNetwork, error) {
 	return myNetwork, nil
 }
 
+func (d *Docker) NetworkRemove(networkID string) error {
+	return d.cli.NetworkRemove(d.ctx, networkID)
+}
+
 func (d *Docker) getContainerIP(c types.ContainerJSON) string {
 	networkSettings := c.NetworkSettings
 	networkMode := string(c.HostConfig.NetworkMode)

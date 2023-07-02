@@ -13,8 +13,8 @@ import (
 const commands = `
  GENERAL ↑/↓: Navigate • ctrl/c: Exit • ctrl/r: refresh • esc: Back 
  CONTAINERS ctrl/f: Search • ctrl/l: Logs • ctrl/o: Options • ctrl/e: Attach cmd
- IMAGES ctrl/b: List • ctrl/f: Search
- NETWORKS ctrl/n: List
+ IMAGES ctrl/b: List • ctrl/f: Search • ctrl/o: Options
+ NETWORKS ctrl/n: List • ctrl/f: Search  • ctrl/o: Options
    `
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#9999FF")).Render
@@ -36,6 +36,7 @@ const (
 	MNetworkList
 	MNetworkSearch
 	MNetworkDetail
+	MNetworkOptions
 )
 
 type model struct {
@@ -52,6 +53,7 @@ type model struct {
 	networkList      NetworkList
 	networkSearch    NetworkSearch
 	networkDetail    viewport.Model
+	networkOptions   NetworkOptions
 	ready            bool
 	currentModel     currentModel
 	ContainerID      string
@@ -94,7 +96,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.ClearScreen
 			}
 
-			if m.currentModel == MNetworkDetail || m.currentModel == MNetworkSearch {
+			if m.currentModel == MNetworkDetail || m.currentModel == MNetworkSearch || m.currentModel == MNetworkOptions {
 				m.currentModel = MNetworkList
 				return m, tea.ClearScreen
 			}
@@ -158,6 +160,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.networkList.table, _ = m.networkList.Update(msg, &m)
 	m.networkSearch, _ = m.networkSearch.Update(msg, &m)
+	m.networkOptions, _ = m.networkOptions.Update(msg, &m)
 
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -211,6 +214,8 @@ func (m model) View() string {
 		return m.networkSearch.View()
 	case MNetworkDetail:
 		return m.networkDetail.View()
+	case MNetworkOptions:
+		return m.networkOptions.View()
 
 	default:
 		return ""

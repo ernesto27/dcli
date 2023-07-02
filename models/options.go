@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -13,6 +12,7 @@ type Options struct {
 	Choices   []string
 	Container string
 	Image     string
+	Network   string
 }
 
 const (
@@ -22,7 +22,7 @@ const (
 	Restart = "Restart"
 )
 
-func (o Options) View() string {
+func (o Options) View(title string) string {
 	s := strings.Builder{}
 
 	var style = lipgloss.NewStyle().
@@ -45,11 +45,5 @@ func (o Options) View() string {
 		s.WriteString("\n")
 	}
 	s.WriteString("\n(press Esc to go back)\n")
-
-	options := fmt.Sprintf("Options container: %s - %s", o.Container, o.Image)
-	if o.Container == "" {
-		options = fmt.Sprintf("Options image: %s", o.Image)
-	}
-
-	return style.Render(options) + s.String()
+	return style.Render(title) + s.String()
 }

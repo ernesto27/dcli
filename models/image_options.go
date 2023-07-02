@@ -24,6 +24,11 @@ func NewImageOptions(container string, image string) ImageOptions {
 	}
 }
 
+func (o ImageOptions) View() string {
+	title := fmt.Sprintf("Options image: %s", o.Image)
+	return o.Options.View(title)
+}
+
 func (o ImageOptions) Update(msg tea.Msg, m *model) (ImageOptions, tea.Cmd) {
 	if m.currentModel != MImageOptions {
 		return o, nil

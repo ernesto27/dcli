@@ -77,6 +77,9 @@ func (cl NetworkList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 		case "ctrl+f":
 			m.networkSearch.textInput.SetValue("")
 			m.currentModel = MNetworkSearch
+		case "ctrl+o":
+			m.networkOptions = NewNetworkOptions(m.networkList.table.SelectedRow()[1])
+			m.currentModel = MNetworkOptions
 		}
 	}
 

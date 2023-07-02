@@ -25,6 +25,11 @@ func NewContainerOptions(container string, image string) ContainerOptions {
 	}
 }
 
+func (o ContainerOptions) View() string {
+	title := fmt.Sprintf("Options container: %s - %s", o.Container, o.Image)
+	return o.Options.View(title)
+}
+
 func (o ContainerOptions) Update(msg tea.Msg, m *model) (ContainerOptions, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
