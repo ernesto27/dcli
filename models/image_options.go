@@ -25,14 +25,14 @@ func NewImageOptions(container string, image string) ImageOptions {
 }
 
 func (o ImageOptions) Update(msg tea.Msg, m *model) (ImageOptions, tea.Cmd) {
+	if m.currentModel != MImageOptions {
+		return o, nil
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if m.currentModel != MImageOptions {
-				return o, nil
-			}
-
 			errAction := false
 			option := m.imageOptions.Choices[m.imageOptions.Cursor]
 

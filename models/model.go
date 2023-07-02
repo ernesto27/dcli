@@ -50,7 +50,7 @@ type model struct {
 	imageSearch      ImageSearch
 	imageOptions     ImageOptions
 	networkList      NetworkList
-	networkSearch    Search
+	networkSearch    NetworkSearch
 	networkDetail    viewport.Model
 	ready            bool
 	currentModel     currentModel
@@ -66,7 +66,7 @@ func NewModel(dockerClient *docker.Docker, version string) *model {
 		dockerClient:    dockerClient,
 		containerSearch: NewContainerSearch(),
 		imageSearch:     NewImageSearch(),
-		networkSearch:   NewSearch(),
+		networkSearch:   NewNetworkSearch(),
 		currentModel:    MContainerList,
 		dockerVersion:   version,
 	}
@@ -94,7 +94,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.ClearScreen
 			}
 
-			if m.currentModel == MNetworkDetail {
+			if m.currentModel == MNetworkDetail || m.currentModel == MNetworkSearch {
 				m.currentModel = MNetworkList
 				return m, tea.ClearScreen
 			}
@@ -157,7 +157,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.imageDetail, _ = m.imageDetail.Update(msg)
 
 	m.networkList.table, _ = m.networkList.Update(msg, &m)
-	m.networkSearch.textInput, _ = m.networkSearch.textInput.Update(msg)
+	m.networkSearch, _ = m.networkSearch.Update(msg, &m)
 
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -208,11 +208,7 @@ func (m model) View() string {
 	case MNetworkList:
 		return m.networkList.View(commands, m.dockerVersion)
 	case MNetworkSearch:
-		return fmt.Sprintf(
-			"Search network by name\n\n%s\n\n%s",
-			m.networkSearch.textInput.View(),
-			"(esc to back)",
-		) + "\n"
+		return m.networkSearch.View()
 	case MNetworkDetail:
 		return m.networkDetail.View()
 
