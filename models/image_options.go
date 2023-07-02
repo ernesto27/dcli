@@ -2,10 +2,8 @@ package models
 
 import (
 	"fmt"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type ImageOptions struct {
@@ -24,38 +22,6 @@ func NewImageOptions(container string, image string) ImageOptions {
 			Image:     image,
 		},
 	}
-}
-
-func (o ImageOptions) View() string {
-	s := strings.Builder{}
-
-	var style = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#FAFAFA")).
-		Background(lipgloss.Color("#3259A8")).
-		Padding(1).
-		MarginTop(1).
-		MarginBottom(1)
-
-	s.WriteString("\n")
-
-	for i := 0; i < len(o.Choices); i++ {
-		if o.Cursor == i {
-			s.WriteString("(•) ")
-		} else {
-			s.WriteString("( ) ")
-		}
-		s.WriteString(o.Choices[i])
-		s.WriteString("\n")
-	}
-	s.WriteString("\n(press Esc to go back)\n")
-
-	options := fmt.Sprintf("Options container: %s - %s", o.Container, o.Image)
-	if o.Container == "" {
-		options = fmt.Sprintf("Options image: %s", o.Image)
-	}
-
-	return style.Render(options) + s.String()
 }
 
 func (o ImageOptions) Update(msg tea.Msg, m *model) (ImageOptions, tea.Cmd) {
