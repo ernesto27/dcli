@@ -37,6 +37,8 @@ const (
 	MNetworkSearch
 	MNetworkDetail
 	MNetworkOptions
+
+	MVolumeList
 )
 
 type model struct {
@@ -54,6 +56,7 @@ type model struct {
 	networkSearch    NetworkSearch
 	networkDetail    viewport.Model
 	networkOptions   NetworkOptions
+	volumeList       VolumeList
 	ready            bool
 	currentModel     currentModel
 	ContainerID      string
@@ -122,6 +125,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.setContainerList()
 			return m, tea.ClearScreen
 
+		case "ctrl+v":
+			volumes, err := m.dockerClient.VolumeList()
+			if err != nil {
+				fmt.Println(err)
+			}
+			m.volumeList = NewVolumeList(volumes, "")
+			m.currentModel = MVolumeList
+
 		}
 
 	case attachExited:
@@ -161,6 +172,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.networkList.table, _ = m.networkList.Update(msg, &m)
 	m.networkSearch, _ = m.networkSearch.Update(msg, &m)
 	m.networkOptions, _ = m.networkOptions.Update(msg, &m)
+
+	m.volumeList.table, _ = m.volumeList.Update(msg, &m)
 
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -216,6 +229,9 @@ func (m model) View() string {
 		return m.networkDetail.View()
 	case MNetworkOptions:
 		return m.networkOptions.View()
+
+	case MVolumeList:
+		return m.volumeList.View(commands, m.dockerVersion)
 
 	default:
 		return ""

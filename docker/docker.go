@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 )
 
@@ -390,6 +391,17 @@ func (d *Docker) GetNetworkByName(name string) (MyNetwork, error) {
 		}
 	}
 	return MyNetwork{}, fmt.Errorf("network %s not found", name)
+}
+
+func (d *Docker) VolumeList() ([]*volume.Volume, error) {
+	options := volume.ListOptions{}
+	volumes, err := d.cli.VolumeList(d.ctx, options)
+	if err != nil {
+		return []*volume.Volume{}, err
+	}
+
+	return volumes.Volumes, nil
+
 }
 
 func (d *Docker) Events() {
