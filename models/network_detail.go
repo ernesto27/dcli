@@ -10,27 +10,6 @@ import (
 )
 
 func NewNetworkDetail(network docker.MyNetwork, createTable utils.CreateTableFunc) (viewport.Model, error) {
-	// 	content := `
-	// # Network status
-
-	// | Type | Value |
-	// | ---- | ----- |
-	// | ID | 1234567890 |
-	// | Name | my-network |
-	// | Driver | bridge |
-	// | Scope | local |
-	// | Enable IPv6 | false |
-	// | Internal | false |
-	// | Attachable | false |
-
-	// # Containers
-
-	// | ID | Name | IPv4 Address | IPv6 Address |
-	// | -- | ---- | ------------ | ------------ |
-	// | 1234567890 | my-container |
-	// | 1234567890 | my-container |
-
-	//`
 	content := getContentNetwork(network)
 	const width = 120
 

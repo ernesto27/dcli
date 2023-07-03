@@ -1,6 +1,8 @@
 package models
 
 import (
+	"dockerniceui/utils"
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -15,10 +17,11 @@ type VolumeList struct {
 
 func NewVolumeList(volumeList []*volume.Volume, query string) VolumeList {
 	columns := []table.Column{
-		{Title: "Name", Width: 30},
-		{Title: "Stack", Width: 20},
-		{Title: "Driver", Width: 20},
-		{Title: "Created", Width: 30},
+		{Title: "Name", Width: 20},
+		{Title: "Stack", Width: 10},
+		{Title: "Driver", Width: 10},
+		{Title: "Mount point", Width: 40},
+		{Title: "Created", Width: 25},
 	}
 
 	rows := GetVolumeRows(volumeList, query)
@@ -61,6 +64,17 @@ func (vl VolumeList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
+			v, err := m.dockerClient.GetVolumeByName(vl.table.SelectedRow()[0])
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			vd, err := NewVolumeDetail(v, utils.CreateTable)
+			if err != nil {
+				fmt.Println(err)
+			}
+			m.volumeDetail = vd
+			m.currentModel = MVolumeDetail
 		}
 	}
 
@@ -86,6 +100,7 @@ func GetVolumeRows(volumeList []*volume.Volume, query string) []table.Row {
 			v.Name,
 			"",
 			v.Driver,
+			v.Mountpoint,
 			v.CreatedAt,
 		})
 	}

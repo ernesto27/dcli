@@ -22,6 +22,7 @@ type Docker struct {
 	Containers []MyContainer
 	Images     []MyImage
 	Networks   []MyNetwork
+	Volumes    []*volume.Volume
 }
 
 type MyNetwork struct {
@@ -400,8 +401,18 @@ func (d *Docker) VolumeList() ([]*volume.Volume, error) {
 		return []*volume.Volume{}, err
 	}
 
+	d.Volumes = volumes.Volumes
 	return volumes.Volumes, nil
+}
 
+func (d *Docker) GetVolumeByName(name string) (*volume.Volume, error) {
+	for _, v := range d.Volumes {
+		if v.Name == name {
+			return v, nil
+		}
+	}
+
+	return &volume.Volume{}, fmt.Errorf("volume %s not found", name)
 }
 
 func (d *Docker) Events() {

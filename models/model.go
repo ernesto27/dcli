@@ -39,6 +39,7 @@ const (
 	MNetworkOptions
 
 	MVolumeList
+	MVolumeDetail
 )
 
 type model struct {
@@ -57,6 +58,7 @@ type model struct {
 	networkDetail    viewport.Model
 	networkOptions   NetworkOptions
 	volumeList       VolumeList
+	volumeDetail     viewport.Model
 	ready            bool
 	currentModel     currentModel
 	ContainerID      string
@@ -174,6 +176,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.networkOptions, _ = m.networkOptions.Update(msg, &m)
 
 	m.volumeList.table, _ = m.volumeList.Update(msg, &m)
+	m.volumeDetail, _ = m.volumeDetail.Update(msg)
 
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -232,6 +235,8 @@ func (m model) View() string {
 
 	case MVolumeList:
 		return m.volumeList.View(commands, m.dockerVersion)
+	case MVolumeDetail:
+		return m.volumeDetail.View()
 
 	default:
 		return ""
