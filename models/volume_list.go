@@ -1,6 +1,7 @@
 package models
 
 import (
+	"dockerniceui/docker"
 	"dockerniceui/utils"
 	"fmt"
 	"strings"
@@ -8,14 +9,13 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/docker/docker/api/types/volume"
 )
 
 type VolumeList struct {
 	table table.Model
 }
 
-func NewVolumeList(volumeList []*volume.Volume, query string) VolumeList {
+func NewVolumeList(volumeList []docker.MyVolume, query string) VolumeList {
 	columns := []table.Column{
 		{Title: "Name", Width: 20},
 		{Title: "Stack", Width: 10},
@@ -84,13 +84,13 @@ func (vl VolumeList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 	return vl.table, nil
 }
 
-func GetVolumeRows(volumeList []*volume.Volume, query string) []table.Row {
-	var filtered []*volume.Volume
+func GetVolumeRows(volumeList []docker.MyVolume, query string) []table.Row {
+	var filtered []docker.MyVolume
 	if query == "" {
 		filtered = volumeList
 	} else {
 		for _, v := range volumeList {
-			if strings.Contains(strings.ToLower(v.Name), strings.ToLower(query)) {
+			if strings.Contains(strings.ToLower(v.Volume.Name), strings.ToLower(query)) {
 				filtered = append(filtered, v)
 			}
 		}
@@ -100,11 +100,11 @@ func GetVolumeRows(volumeList []*volume.Volume, query string) []table.Row {
 	for _, v := range filtered {
 
 		rows = append(rows, table.Row{
-			v.Name,
+			v.Volume.Name,
 			"",
-			v.Driver,
-			v.Mountpoint,
-			v.CreatedAt,
+			v.Volume.Driver,
+			v.Volume.Mountpoint,
+			v.Volume.CreatedAt,
 		})
 	}
 

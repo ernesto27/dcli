@@ -109,6 +109,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.ClearScreen
 			}
 
+			if m.currentModel == MVolumeDetail || m.currentModel == MVolumeSearch {
+				m.currentModel = MVolumeList
+				return m, tea.ClearScreen
+			}
+
 		case "ctrl+c":
 			return m, tea.Quit
 		case "down":

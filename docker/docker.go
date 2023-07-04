@@ -22,7 +22,7 @@ type Docker struct {
 	Containers []MyContainer
 	Images     []MyImage
 	Networks   []MyNetwork
-	Volumes    []*volume.Volume
+	Volumes    []MyVolume
 }
 
 type MyNetwork struct {
@@ -47,13 +47,21 @@ type MyContainer struct {
 	Size       string
 	Command    string
 	Env        []string
+	ReadOnly   bool
+	MountedAt  string
 	Network    MyNetwork
+	Mounts     []types.MountPoint
 }
 
 type MyImage struct {
 	Summary types.ImageSummary
 	Inspect types.ImageInspect
 	History []image.HistoryResponseItem
+}
+
+type MyVolume struct {
+	Volume     *volume.Volume
+	Containers []MyContainer
 }
 
 func (i *MyImage) GetFormatTimestamp() string {
@@ -159,6 +167,14 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 			gateway = networkSettings.Networks[networkMode].Gateway
 		}
 
+		readOnly := false
+		mountedAt := ""
+
+		if len(c.Mounts) > 0 {
+			readOnly = c.Mounts[0].RW == false
+			mountedAt = c.Mounts[0].Destination
+		}
+
 		mc = append(mc, MyContainer{
 			ID:         c.ID,
 			IDShort:    utils.TrimValue(c.ID, 10),
@@ -172,11 +188,14 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 			Size:       formatSize(*cJSON.SizeRootFs),
 			Env:        cJSON.Config.Env,
 			Command:    strings.Join(cJSON.Config.Entrypoint, " ") + " " + strings.Join(cJSON.Config.Cmd, " "),
+			ReadOnly:   readOnly,
+			MountedAt:  mountedAt,
 			Network: MyNetwork{
 				Name:      networkMode,
 				IPAddress: ipAddress,
 				Gateway:   gateway,
 			},
+			Mounts: c.Mounts,
 		})
 
 		d.Containers = mc
@@ -394,25 +413,44 @@ func (d *Docker) GetNetworkByName(name string) (MyNetwork, error) {
 	return MyNetwork{}, fmt.Errorf("network %s not found", name)
 }
 
-func (d *Docker) VolumeList() ([]*volume.Volume, error) {
+func (d *Docker) VolumeList() ([]MyVolume, error) {
 	options := volume.ListOptions{}
-	volumes, err := d.cli.VolumeList(d.ctx, options)
+	vl, err := d.cli.VolumeList(d.ctx, options)
 	if err != nil {
-		return []*volume.Volume{}, err
+		return []MyVolume{}, err
 	}
 
-	d.Volumes = volumes.Volumes
-	return volumes.Volumes, nil
+	mvol := []MyVolume{}
+	for _, v := range vl.Volumes {
+		name := v.Name
+
+		containers := []MyContainer{}
+		for _, c := range d.Containers {
+			for _, mount := range c.Mounts {
+				if mount.Type == "volume" && mount.Name == name {
+					containers = append(containers, c)
+				}
+			}
+		}
+
+		mvol = append(mvol, MyVolume{
+			Volume:     v,
+			Containers: containers,
+		})
+	}
+
+	d.Volumes = mvol
+	return mvol, nil
 }
 
-func (d *Docker) GetVolumeByName(name string) (*volume.Volume, error) {
+func (d *Docker) GetVolumeByName(name string) (MyVolume, error) {
 	for _, v := range d.Volumes {
-		if v.Name == name {
+		if v.Volume.Name == name {
 			return v, nil
 		}
 	}
 
-	return &volume.Volume{}, fmt.Errorf("volume %s not found", name)
+	return MyVolume{}, fmt.Errorf("volume %s not found", name)
 }
 
 func (d *Docker) Events() {

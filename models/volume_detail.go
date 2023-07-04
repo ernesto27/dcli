@@ -1,16 +1,16 @@
 package models
 
 import (
+	"dockerniceui/docker"
 	"dockerniceui/utils"
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/docker/docker/api/types/volume"
 )
 
-func NewVolumeDetail(volume *volume.Volume, createTable utils.CreateTableFunc) (viewport.Model, error) {
+func NewVolumeDetail(volume docker.MyVolume, createTable utils.CreateTableFunc) (viewport.Model, error) {
 	content := getContentVolume(volume)
 	const width = 120
 
@@ -38,35 +38,32 @@ func NewVolumeDetail(volume *volume.Volume, createTable utils.CreateTableFunc) (
 	return vp, nil
 }
 
-func getContentVolume(volume *volume.Volume) string {
-	// 	content := `
-	// # Volume detail
-
-	// | Type | Value |
-	// | ---- | ----- |
-	// | ID | 1234567890 |
-	// | Created | my-network |
-	// | Mount path | bridge |
-	// | Driver | local |
-	// | Labels | false
-
-	// # Containers using this volume
-
-	// | Name | Mounted at | Read -only
-	// | -- | ---- | ------------ | ------------ |
-	// | 1234567890 | my-container |
-	// | 1234567890 | my-container |
-
-	//`
+func getContentVolume(v docker.MyVolume) string {
 	response := ""
 	response += utils.CreateTable("# Volume detail", []string{"Type", "Value"},
 		[][]string{
-			{"ID", volume.Name},
-			{"Created", volume.CreatedAt},
-			{"Mount path", volume.Mountpoint},
-			{"Driver", volume.Driver},
-			{"Labels", fmt.Sprintf("%v", volume.Labels)},
+			{"ID", v.Volume.Name},
+			{"Created", v.Volume.CreatedAt},
+			{"Mount path", v.Volume.Mountpoint},
+			{"Driver", v.Volume.Driver},
+			{"Labels", fmt.Sprintf("%v", v.Volume.Labels)},
 		})
+
+	response += "\n\n"
+
+	if len(v.Containers) > 0 {
+		rows := [][]string{}
+		for _, c := range v.Containers {
+			ro := "false"
+			if c.ReadOnly {
+				ro = "true"
+			}
+			rows = append(rows, []string{c.Name, c.MountedAt, ro})
+		}
+
+		response += utils.CreateTable("# Containers using this volume", []string{"Name", "Mounted at", "Read -only"}, rows)
+
+	}
 
 	return response
 }
