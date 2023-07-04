@@ -20,12 +20,19 @@ https://github.com/ernesto27/container-nice-cli/releases
 ## Key bindings
 | Key              | Description                                 |
 |:-----------------|:--------------------------------------------|
-| <kbd>ctrl-f</kbd>     | Search containers by name              |
-| <kbd>ctrl-l</kbd>     | View logs continainers                 |
-| <kbd>ctrl-o</kbd>     | Options for container (stop, start, remove)|
-| <kbd>ctrl-e</kbd>     | Exec in a contaner                    |
-| <kbd>ctrl-b</kbd>     | List images
-| <kbd>ctrl-f</kbd>     | On image list, search by image name    |
+| <kbd>ctrl+f</kbd>     | Search containers by name              |
+| <kbd>ctrl+l</kbd>     | View logs containers                 |
+| <kbd>ctrl+o</kbd>     | Options for container (stop, start, remove)|
+| <kbd>ctrl+e</kbd>     | Exec in a contaner                    |
+| <kbd>ctrl+b</kbd>     | List images
+| <kbd>ctrl+f</kbd>     | On image list, search by image name    |
+| <kbd>ctrl+o</kbd>     | Options image    |
+| <kbd>ctrl+n</kbd>     | Network list    |
+| <kbd>ctrl+f</kbd>     | Search network by name    |
+| <kbd>ctrl+o</kbd>     | Option network    |
+| <kbd>ctrl+v</kbd>     | Volume list    |
+| <kbd>ctrl+f</kbd>     | Search volume by name    |
+| <kbd>ctrl+o</kbd>     | Option volume    |
 
 
 

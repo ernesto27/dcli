@@ -11,10 +11,11 @@ import (
 )
 
 const commands = `
- GENERAL ↑/↓: Navigate • ctrl/c: Exit • ctrl/r: refresh • esc: Back 
- CONTAINERS ctrl/f: Search • ctrl/l: Logs • ctrl/o: Options • ctrl/e: Attach cmd
- IMAGES ctrl/b: List • ctrl/f: Search • ctrl/o: Options
- NETWORKS ctrl/n: List • ctrl/f: Search  • ctrl/o: Options
+ GENERAL ↑/↓: Navigate • ctrl+c: Exit • ctrl+r: refresh • esc: Back 
+ CONTAINERS ctrl+f: Search • ctrl+l: Logs • ctrl+o: Options • ctrl+e: Attach cmd
+ IMAGES ctrl+b: List • ctrl+f: Search • ctrl+o: Options
+ NETWORKS ctrl+n: List • ctrl+f: Search  • ctrl+o: Options
+ VOLUMES ctrl+v: List • ctrl+f: Search  • ctrl+o: Options
    `
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#9999FF")).Render
