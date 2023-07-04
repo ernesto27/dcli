@@ -124,7 +124,7 @@ Sleep 5s
 
 #image search 
 Ctrl+f 
-Sleep 3s
+Sleep 5s
 Type nginx 
 Sleep 5s
 Enter 
@@ -134,9 +134,41 @@ Sleep 5s
 
 # image option 
 Ctrl+o 
-Sleep 3s 
+Sleep 5s 
 Escape
-Sleep 3s
+Sleep 5s
+
+#network list
+Ctrl+n
+Sleep 5s
+Enter
+Sleep 5s
+Escape
+Sleep 5s
+
+#network search
+Ctrl+f 
+Sleep 5s
+Type bridge 
+Sleep 5s
+Enter 
+Sleep 5s
+
+#network options
+Ctrl+o
+Sleep 5s
+Escape
+Sleep 5s
+Escape 
+Sleep 5s
+
+#volume list 
+Ctrl+v
+Sleep 5s
+Enter
+Sleep 5s
+Escape
+Sleep 5s
 
 
 
