@@ -121,11 +121,6 @@ Sleep 5s
 Escape 
 Sleep 5s 
 
-#image detail
-Enter 
-Sleep 5s 
-Escape
-Sleep 5s
 
 #image search 
 Ctrl+f 
@@ -136,7 +131,14 @@ Enter
 Sleep 5s 
 Enter 
 Sleep 5s 
+
+# image option 
+Ctrl+o 
+Sleep 3s 
 Escape
+Sleep 3s
+
+
 
 
 
