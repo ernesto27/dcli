@@ -75,6 +75,9 @@ func (vl VolumeList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 			}
 			m.volumeDetail = vd
 			m.currentModel = MVolumeDetail
+		case "ctrl+f":
+			m.volumeSearch.textInput.SetValue("")
+			m.currentModel = MVolumeSearch
 		}
 	}
 

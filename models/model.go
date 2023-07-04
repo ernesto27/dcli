@@ -40,6 +40,7 @@ const (
 
 	MVolumeList
 	MVolumeDetail
+	MVolumeSearch
 )
 
 type model struct {
@@ -59,6 +60,7 @@ type model struct {
 	networkOptions   NetworkOptions
 	volumeList       VolumeList
 	volumeDetail     viewport.Model
+	volumeSearch     VolumeSearch
 	ready            bool
 	currentModel     currentModel
 	ContainerID      string
@@ -74,6 +76,7 @@ func NewModel(dockerClient *docker.Docker, version string) *model {
 		containerSearch: NewContainerSearch(),
 		imageSearch:     NewImageSearch(),
 		networkSearch:   NewNetworkSearch(),
+		volumeSearch:    NewVolumeSearch(),
 		currentModel:    MContainerList,
 		dockerVersion:   version,
 	}
@@ -177,6 +180,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.volumeList.table, _ = m.volumeList.Update(msg, &m)
 	m.volumeDetail, _ = m.volumeDetail.Update(msg)
+	m.volumeSearch, _ = m.volumeSearch.Update(msg, &m)
 
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -237,6 +241,8 @@ func (m model) View() string {
 		return m.volumeList.View(commands, m.dockerVersion)
 	case MVolumeDetail:
 		return m.volumeDetail.View()
+	case MVolumeSearch:
+		return m.volumeSearch.View()
 
 	default:
 		return ""
