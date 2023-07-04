@@ -7,12 +7,11 @@ import (
 )
 
 type Options struct {
-	Cursor    int
-	Choice    string
-	Choices   []string
-	Container string
-	Image     string
-	Network   string
+	Cursor  int
+	Choice  string
+	Choices []string
+	Text1   string
+	Text2   string
 }
 
 const (

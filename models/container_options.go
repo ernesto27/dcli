@@ -16,17 +16,17 @@ func NewContainerOptions(container string, image string) ContainerOptions {
 
 	return ContainerOptions{
 		Options{
-			Cursor:    0,
-			Choice:    "",
-			Choices:   choices,
-			Container: container,
-			Image:     image,
+			Cursor:  0,
+			Choice:  "",
+			Choices: choices,
+			Text1:   container,
+			Text2:   image,
 		},
 	}
 }
 
 func (o ContainerOptions) View() string {
-	title := fmt.Sprintf("Options container: %s - %s", o.Container, o.Image)
+	title := fmt.Sprintf("Options container: %s - %s", o.Text1, o.Text2)
 	return o.Options.View(title)
 }
 

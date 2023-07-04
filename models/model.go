@@ -41,6 +41,7 @@ const (
 	MVolumeList
 	MVolumeDetail
 	MVolumeSearch
+	MVolumeOptions
 )
 
 type model struct {
@@ -61,6 +62,7 @@ type model struct {
 	volumeList       VolumeList
 	volumeDetail     viewport.Model
 	volumeSearch     VolumeSearch
+	volumeOptions    VolumeOptions
 	ready            bool
 	currentModel     currentModel
 	ContainerID      string
@@ -109,7 +111,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.ClearScreen
 			}
 
-			if m.currentModel == MVolumeDetail || m.currentModel == MVolumeSearch {
+			if m.currentModel == MVolumeDetail || m.currentModel == MVolumeSearch || m.currentModel == MVolumeOptions {
 				m.currentModel = MVolumeList
 				return m, tea.ClearScreen
 			}
@@ -186,6 +188,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.volumeList.table, _ = m.volumeList.Update(msg, &m)
 	m.volumeDetail, _ = m.volumeDetail.Update(msg)
 	m.volumeSearch, _ = m.volumeSearch.Update(msg, &m)
+	m.volumeOptions, _ = m.volumeOptions.Update(msg, &m)
 
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -248,6 +251,8 @@ func (m model) View() string {
 		return m.volumeDetail.View()
 	case MVolumeSearch:
 		return m.volumeSearch.View()
+	case MVolumeOptions:
+		return m.volumeOptions.View()
 
 	default:
 		return ""

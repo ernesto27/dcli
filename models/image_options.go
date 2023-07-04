@@ -10,22 +10,21 @@ type ImageOptions struct {
 	Options
 }
 
-func NewImageOptions(container string, image string) ImageOptions {
+func NewImageOptions(image string) ImageOptions {
 	choices := []string{Remove}
 
 	return ImageOptions{
 		Options{
-			Cursor:    0,
-			Choice:    "",
-			Choices:   choices,
-			Container: container,
-			Image:     image,
+			Cursor:  0,
+			Choice:  "",
+			Choices: choices,
+			Text1:   image,
 		},
 	}
 }
 
 func (o ImageOptions) View() string {
-	title := fmt.Sprintf("Options image: %s", o.Image)
+	title := fmt.Sprintf("Options image: %s", o.Text1)
 	return o.Options.View(title)
 }
 

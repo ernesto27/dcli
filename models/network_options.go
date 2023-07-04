@@ -18,13 +18,13 @@ func NewNetworkOptions(name string) NetworkOptions {
 			Cursor:  0,
 			Choice:  "",
 			Choices: choices,
-			Network: name,
+			Text1:   name,
 		},
 	}
 }
 
 func (n NetworkOptions) View() string {
-	title := fmt.Sprintf("Options network: %s", n.Network)
+	title := fmt.Sprintf("Options network: %s", n.Text1)
 	return n.Options.View(title)
 }
 

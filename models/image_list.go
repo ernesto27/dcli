@@ -78,7 +78,7 @@ func (il ImageList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 			m.imageSearch.textInput.SetValue("")
 			m.currentModel = MImageSearch
 		case "ctrl+o":
-			ov := NewImageOptions("", m.imageList.table.SelectedRow()[1])
+			ov := NewImageOptions(m.imageList.table.SelectedRow()[1])
 			m.imageOptions = ov
 			m.currentModel = MImageOptions
 

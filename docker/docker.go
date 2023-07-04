@@ -453,6 +453,10 @@ func (d *Docker) GetVolumeByName(name string) (MyVolume, error) {
 	return MyVolume{}, fmt.Errorf("volume %s not found", name)
 }
 
+func (d *Docker) VolumeRemove(volumeID string) error {
+	return d.cli.VolumeRemove(d.ctx, volumeID, false)
+}
+
 func (d *Docker) Events() {
 	go func() {
 		eventStream, err := d.cli.Events(d.ctx, types.EventsOptions{})
