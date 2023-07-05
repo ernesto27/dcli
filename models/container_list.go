@@ -1,8 +1,8 @@
 package models
 
 import (
-	"dockerniceui/docker"
-	"dockerniceui/utils"
+	"dcli/docker"
+	"dcli/utils"
 	"fmt"
 	"sort"
 	"strings"

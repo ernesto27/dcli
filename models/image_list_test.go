@@ -1,7 +1,7 @@
 package models
 
 import (
-	"dockerniceui/docker"
+	"dcli/docker"
 	"reflect"
 	"testing"
 

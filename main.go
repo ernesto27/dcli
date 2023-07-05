@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"dockerniceui/docker"
-	"dockerniceui/models"
+	"dcli/docker"
+	"dcli/models"
 	"fmt"
 	"os"
 
