@@ -12,7 +12,7 @@ type ContainerOptions struct {
 }
 
 func NewContainerOptions(container string, image string) ContainerOptions {
-	choices := []string{Stop, Start, Remove, Restart}
+	choices := []string{Stop, Start, Remove, Restart, Pause, Resume}
 
 	return ContainerOptions{
 		Options{

@@ -3,7 +3,7 @@ package docker
 import (
 	"bufio"
 	"context"
-	"dockerniceui/utils"
+	"dcli/utils"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -248,6 +248,10 @@ func (d *Docker) ContainerStop(containerID string) error {
 func (d *Docker) ContainerStart(containerID string) error {
 	err := d.cli.ContainerStart(d.ctx, containerID, types.ContainerStartOptions{})
 	return err
+}
+
+func (d *Docker) ContainerPause(containerID string) error {
+	return d.cli.ContainerPause(d.ctx, containerID)
 }
 
 func (d *Docker) ImageList() ([]MyImage, error) {

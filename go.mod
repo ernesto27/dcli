@@ -1,4 +1,4 @@
-module dockerniceui
+module dcli
 
 go 1.20
 
