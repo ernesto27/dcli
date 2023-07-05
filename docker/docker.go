@@ -54,6 +54,15 @@ type MyContainer struct {
 	Mounts     []types.MountPoint
 }
 
+type MyContainerStats struct {
+	ID       string
+	CPUPer   float64
+	MemUsage string
+	MemLimit string
+	MemPer   float64
+	PID      uint64
+}
+
 type MyImage struct {
 	Summary types.ImageSummary
 	Inspect types.ImageInspect
@@ -342,7 +351,7 @@ func (d *Docker) ContainerLogs(containerId string) (string, error) {
 	return logs, nil
 }
 
-func (d *Docker) ContainerStats(containerID string) (types.ContainerStats, error) {
+func (d *Docker) ContainerStats(containerID string) (MyContainerStats, error) {
 	s, err := d.cli.ContainerStats(d.ctx, containerID, false)
 	if err != nil {
 		panic(err)
@@ -358,17 +367,20 @@ func (d *Docker) ContainerStats(containerID string) (types.ContainerStats, error
 	cpuPercentage := calculateCPUPercentage(&containerStats)
 	memUsage, memLimit := calculateMemoryUsage(&containerStats)
 	memPercentage := calculateMemoryPercentage(memUsage, memLimit)
-	fmt.Printf("CPU PERCENTAGE %.2f%%  - MEMUSAGE %s / %s  MEMPERCENTAGE:%.2f%%    NETIO: %s   %d\n",
-		cpuPercentage,
-		formatSize2(memUsage),
-		formatSize2(memLimit),
-		memPercentage,
-	)
 
-	return s, err
+	cs := MyContainerStats{
+		ID:       containerID,
+		MemUsage: formatSizeStats(memUsage),
+		MemLimit: formatSizeStats(memLimit),
+		MemPer:   memPercentage,
+		CPUPer:   cpuPercentage,
+		PID:      containerStats.PidsStats.Current,
+	}
+
+	return cs, err
 }
 
-func formatSize2(size float64) string {
+func formatSizeStats(size float64) string {
 	units := []string{"B", "KB", "MB", "GB", "TB"}
 
 	unitIndex := 0

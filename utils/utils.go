@@ -17,11 +17,8 @@ func CreateTable(title string, columns []string, rows [][]string) string {
 	}
 
 	table += "|\n"
-
-	table += "| ------------- | ------------- "
-
-	if len(columns) > 2 {
-		table += "| -------------"
+	for _, _ = range columns {
+		table += "| ------------- "
 	}
 
 	table += "|\n"
