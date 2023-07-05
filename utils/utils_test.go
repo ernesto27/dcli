@@ -138,13 +138,13 @@ func TestCreateTable(t *testing.T) {
 					},
 				},
 			},
-			want: "# title\n\n| column1 | column2 | column3 |\n| ------------- | ------------- | -------------|\n| row1 | row2 | row3 |\n| row4 | row5 | row6 |\n",
+			want: "# title\n\n| column1 | column2 | column3 |\n| ------------- | ------------- | ------------- |\n| row1 | row2 | row3 |\n| row4 | row5 | row6 |\n",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := CreateTable(tt.args.title, tt.args.columns, tt.args.rows); got != tt.want {
-				t.Errorf("CreateTable() = %v, want %v", got, tt.want)
+				t.Errorf("CreateTable() = got %v, want %v", got, tt.want)
 			}
 		})
 	}

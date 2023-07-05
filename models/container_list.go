@@ -116,6 +116,18 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 
 			m.networkList = NewNetworkList(networks, "")
 			m.currentModel = MNetworkList
+		case "ctrl+s":
+			stats, err := m.dockerClient.ContainerStats(m.containerList.table.SelectedRow()[0])
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			cs, err := NewContainerStats(stats, utils.CreateTable)
+			if err != nil {
+				fmt.Println(err)
+			}
+			m.containerStats = cs
+			m.currentModel = MContainerStats
 		}
 	}
 

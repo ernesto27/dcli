@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"dockerniceui/utils"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -51,6 +52,15 @@ type MyContainer struct {
 	MountedAt  string
 	Network    MyNetwork
 	Mounts     []types.MountPoint
+}
+
+type MyContainerStats struct {
+	ID       string
+	CPUPer   float64
+	MemUsage string
+	MemLimit string
+	MemPer   float64
+	PID      uint64
 }
 
 type MyImage struct {
@@ -339,6 +349,78 @@ func (d *Docker) ContainerLogs(containerId string) (string, error) {
 	}
 
 	return logs, nil
+}
+
+func (d *Docker) ContainerStats(containerID string) (MyContainerStats, error) {
+	s, err := d.cli.ContainerStats(d.ctx, containerID, false)
+	if err != nil {
+		panic(err)
+	}
+	defer s.Body.Close()
+
+	var containerStats types.Stats
+	dec := json.NewDecoder(s.Body)
+	if err := dec.Decode(&containerStats); err != nil {
+		panic(err)
+	}
+
+	cpuPercentage := calculateCPUPercentage(&containerStats)
+	memUsage, memLimit := calculateMemoryUsage(&containerStats)
+	memPercentage := calculateMemoryPercentage(memUsage, memLimit)
+
+	cs := MyContainerStats{
+		ID:       containerID,
+		MemUsage: formatSizeStats(memUsage),
+		MemLimit: formatSizeStats(memLimit),
+		MemPer:   memPercentage,
+		CPUPer:   cpuPercentage,
+		PID:      containerStats.PidsStats.Current,
+	}
+
+	return cs, err
+}
+
+func formatSizeStats(size float64) string {
+	units := []string{"B", "KB", "MB", "GB", "TB"}
+
+	unitIndex := 0
+	for size >= 1024 && unitIndex < len(units)-1 {
+		size /= 1024
+		unitIndex++
+	}
+
+	return fmt.Sprintf("%.2f%s", size, units[unitIndex])
+}
+
+func calculateCPUPercentage(stats *types.Stats) float64 {
+	cpuDelta := float64(stats.CPUStats.CPUUsage.TotalUsage) - float64(stats.PreCPUStats.CPUUsage.TotalUsage)
+	systemDelta := float64(stats.CPUStats.SystemUsage) - float64(stats.PreCPUStats.SystemUsage)
+
+	cpuPercentage := 0.0
+	if systemDelta > 0.0 {
+		cpuPercentage = (cpuDelta / systemDelta) * 100.0
+	}
+
+	return cpuPercentage
+}
+
+func calculateMemoryUsage(stats *types.Stats) (float64, float64) {
+	memUsage := float64(stats.MemoryStats.Usage)
+	memLimit := float64(stats.MemoryStats.Limit)
+	return memUsage, memLimit
+}
+
+func calculateMemoryPercentage(memUsage, memLimit float64) float64 {
+	if memLimit <= 0.0 {
+		return 0.0
+	}
+
+	return (memUsage / memLimit) * 100.0
+}
+
+type NetworkIO struct {
+	Input  float64
+	Output float64
 }
 
 func (d *Docker) NetworkList() ([]MyNetwork, error) {

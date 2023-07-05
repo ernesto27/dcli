@@ -12,7 +12,7 @@ import (
 
 const commands = `
  GENERAL ↑/↓: Navigate • ctrl+c: Exit • ctrl+r: refresh • esc: Back 
- CONTAINERS ctrl+f: Search • ctrl+l: Logs • ctrl+o: Options • ctrl+e: Attach cmd
+ CONTAINERS ctrl+f: Search • ctrl+l: Logs • ctrl+o: Options • ctrl+e: Attach cmd • ctrl+s: Stats
  IMAGES ctrl+b: List • ctrl+f: Search • ctrl+o: Options
  NETWORKS ctrl+n: List • ctrl+f: Search  • ctrl+o: Options
  VOLUMES ctrl+v: List • ctrl+f: Search  • ctrl+o: Options
@@ -28,6 +28,7 @@ const (
 	MContainerSearch
 	MContainerLogs
 	MContainerOptions
+	MContainerStats
 
 	MImageList
 	MImageDetail
@@ -52,6 +53,7 @@ type model struct {
 	containerSearch  ContainerSearch
 	containerLogs    LogsView
 	containerOptions ContainerOptions
+	containerStats   viewport.Model
 	imageList        ImageList
 	imageDetail      viewport.Model
 	imageSearch      ImageSearch
@@ -227,6 +229,8 @@ func (m model) View() string {
 		return fmt.Sprintf("%s\n%s\n%s", HeaderView(m.containerLogs.pager, m.containerLogs.container+" - "+m.containerLogs.image), m.containerLogs.pager.View(), FooterView(m.containerLogs.pager))
 	case MContainerOptions:
 		return m.containerOptions.View()
+	case MContainerStats:
+		return m.containerStats.View()
 
 	case MImageList:
 		return m.imageList.View(commands, m.dockerVersion)
