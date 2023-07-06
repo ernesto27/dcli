@@ -19,6 +19,8 @@ const (
 	Start   = "Start"
 	Remove  = "Remove"
 	Restart = "Restart"
+	Pause   = "Pause"
+	Unpause = "Unpause"
 )
 
 func (o Options) View(title string) string {

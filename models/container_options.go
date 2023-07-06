@@ -12,7 +12,7 @@ type ContainerOptions struct {
 }
 
 func NewContainerOptions(container string, image string) ContainerOptions {
-	choices := []string{Stop, Start, Remove, Restart}
+	choices := []string{Stop, Start, Remove, Restart, Pause, Unpause}
 
 	return ContainerOptions{
 		Options{
@@ -62,6 +62,18 @@ func (o ContainerOptions) Update(msg tea.Msg, m *model) (ContainerOptions, tea.C
 				}
 			case Restart:
 				err := m.dockerClient.ContainerRestart(m.ContainerID)
+				if err != nil {
+					fmt.Println(err)
+					errAction = true
+				}
+			case Pause:
+				err := m.dockerClient.ContainerPause(m.ContainerID)
+				if err != nil {
+					fmt.Println(err)
+					errAction = true
+				}
+			case Unpause:
+				err := m.dockerClient.ContainerUnpause(m.ContainerID)
 				if err != nil {
 					fmt.Println(err)
 					errAction = true

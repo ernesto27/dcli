@@ -247,8 +247,15 @@ func (d *Docker) ContainerStop(containerID string) error {
 }
 
 func (d *Docker) ContainerStart(containerID string) error {
-	err := d.cli.ContainerStart(d.ctx, containerID, types.ContainerStartOptions{})
-	return err
+	return d.cli.ContainerStart(d.ctx, containerID, types.ContainerStartOptions{})
+}
+
+func (d *Docker) ContainerPause(containerID string) error {
+	return d.cli.ContainerPause(d.ctx, containerID)
+}
+
+func (d *Docker) ContainerUnpause(containerID string) error {
+	return d.cli.ContainerUnpause(d.ctx, containerID)
 }
 
 func (d *Docker) ImageList() ([]MyImage, error) {
