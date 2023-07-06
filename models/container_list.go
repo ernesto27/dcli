@@ -57,7 +57,15 @@ func NewContainerList(rows []table.Row) ContainerList {
 }
 
 func (cl ContainerList) View(commands string, dockerVersion string) string {
-	return baseStyle.Render(cl.table.View()) + helpStyle("\n DockerVersion: "+dockerVersion+" \n"+commands)
+	// style := lipgloss.NewStyle(
+	s := lipgloss.NewStyle().
+		MarginLeft(1).
+		Background(lipgloss.Color("#0b26d9")).
+		Foreground(lipgloss.Color("#FAFAFA"))
+
+	da := s.Render("DockerVersion: " + dockerVersion + " | Containers: 100 | Images: 20 | Volumes: 10")
+	return baseStyle.Render(cl.table.View()) + helpStyle("\n"+da+"\n"+commands)
+	// return baseStyle.Render(cl.table.View()) + helpStyle("\n DockerVersion: "+dockerVersion+" \n"+commands)
 }
 
 func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
