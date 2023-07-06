@@ -1,10 +1,12 @@
 package models
 
 import (
-	"dcli/docker"
-	"dcli/utils"
 	"fmt"
 	"strings"
+
+	"github.com/ernesto27/dcli/utils"
+
+	"github.com/ernesto27/dcli/docker"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/glamour"

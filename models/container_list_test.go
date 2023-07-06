@@ -1,9 +1,10 @@
 package models
 
 import (
-	"dcli/docker"
 	"reflect"
 	"testing"
+
+	"github.com/ernesto27/dcli/docker"
 
 	"github.com/charmbracelet/bubbles/table"
 )

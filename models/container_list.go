@@ -1,11 +1,13 @@
 package models
 
 import (
-	"dcli/docker"
-	"dcli/utils"
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/ernesto27/dcli/utils"
+
+	"github.com/ernesto27/dcli/docker"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"

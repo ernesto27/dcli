@@ -1,9 +1,11 @@
 package models
 
 import (
-	"dcli/docker"
-	"dcli/utils"
 	"fmt"
+
+	"github.com/ernesto27/dcli/utils"
+
+	"github.com/ernesto27/dcli/docker"
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"

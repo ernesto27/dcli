@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"dcli/docker"
-	"dcli/models"
 	"fmt"
 	"os"
+
+	"github.com/ernesto27/dcli/docker"
+	"github.com/ernesto27/dcli/models"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
