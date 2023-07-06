@@ -16,6 +16,11 @@ Go to release page and download the binary for your OS.
 
 https://github.com/ernesto27/container-nice-cli/releases
 
+Also if you have Golang installed you can install it with:
+```
+go get github.com/ernesto27/container-nice-cli@latest
+```
+
 
 ## Key bindings
 | Key              | Description                                 |
