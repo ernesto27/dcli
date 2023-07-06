@@ -1,4 +1,4 @@
-module dcli
+module github.com/ernesto27/dcli
 
 go 1.20
 
