@@ -74,9 +74,11 @@ type model struct {
 	err              error
 	widthScreen      int
 	heightScreen     int
+	cpuCores         int
+	ram              string
 }
 
-func NewModel(dockerClient *docker.Docker, version string) *model {
+func NewModel(dockerClient *docker.Docker, version string, cpuCores int, ram string) *model {
 	m := &model{
 		dockerClient:    dockerClient,
 		containerSearch: NewContainerSearch(),
@@ -85,6 +87,8 @@ func NewModel(dockerClient *docker.Docker, version string) *model {
 		volumeSearch:    NewVolumeSearch(),
 		currentModel:    MContainerList,
 		dockerVersion:   version,
+		cpuCores:        cpuCores,
+		ram:             ram,
 	}
 	m.setContainerList()
 
@@ -204,7 +208,7 @@ var baseStyle = lipgloss.NewStyle().
 
 var statsStyle = lipgloss.NewStyle().
 	MarginLeft(1).
-	Background(lipgloss.Color("#048ac4")).
+	Background(lipgloss.Color("#021f2b")).
 	Foreground(lipgloss.Color("#FAFAFA"))
 
 func (m model) View() string {
@@ -294,10 +298,12 @@ func (m *model) setContainerList() {
 }
 
 func (m *model) getDockerStats() string {
-	return fmt.Sprintf("DockerVersion: %s | Containers: %d | Images: %d | Volumes: %d",
+	return fmt.Sprintf("\U0001F433 DockerVersion: %s | Containers: %d | Images: %d | Volumes: %d  \U0001F5A5  CPU: %d | Memory: %s ",
 		m.dockerVersion,
 		len(m.dockerClient.Containers),
 		len(m.dockerClient.Images),
 		len(m.dockerClient.Volumes),
+		m.cpuCores,
+		m.ram,
 	)
 }

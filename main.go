@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/ernesto27/dcli/docker"
 	"github.com/ernesto27/dcli/models"
+	"github.com/ernesto27/dcli/utils"
+	"github.com/shirou/gopsutil/mem"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -28,7 +31,13 @@ func main() {
 	dockerClient.ImageList()
 	dockerClient.VolumeList()
 
-	m := models.NewModel(dockerClient, version)
+	ram := ""
+	v, err := mem.VirtualMemory()
+	if err == nil {
+		ram = utils.FormatSize(int64(v.Total))
+	}
+
+	m := models.NewModel(dockerClient, version, runtime.NumCPU(), ram)
 	if _, err := tea.NewProgram(
 		m,
 		tea.WithAltScreen(),

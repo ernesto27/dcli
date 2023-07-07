@@ -86,7 +86,7 @@ func (i *MyImage) GetFormatSize() string {
 	if i.Summary.Size == 0 {
 		return ""
 	}
-	return formatSize(i.Summary.Size)
+	return utils.FormatSize(i.Summary.Size)
 }
 
 func New(ctx context.Context) (*Docker, error) {
@@ -99,26 +99,6 @@ func New(ctx context.Context) (*Docker, error) {
 		cli: cli,
 		ctx: ctx,
 	}, nil
-}
-
-func formatSize(size int64) string {
-	const (
-		B  = 1
-		KB = 1024 * B
-		MB = 1024 * KB
-		GB = 1024 * MB
-	)
-
-	switch {
-	case size >= GB:
-		return fmt.Sprintf("%.2f GB", float64(size)/GB)
-	case size >= MB:
-		return fmt.Sprintf("%.2f MB", float64(size)/MB)
-	case size >= KB:
-		return fmt.Sprintf("%.2f KB", float64(size)/KB)
-	default:
-		return fmt.Sprintf("%d bytes", size)
-	}
 }
 
 func FormatTimestamp(timestamp int64) string {
@@ -196,7 +176,7 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 			State:      c.State,
 			Status:     c.Status,
 			Ports:      c.Ports,
-			Size:       formatSize(*cJSON.SizeRootFs),
+			Size:       utils.FormatSize(*cJSON.SizeRootFs),
 			Env:        cJSON.Config.Env,
 			Command:    strings.Join(cJSON.Config.Entrypoint, " ") + " " + strings.Join(cJSON.Config.Cmd, " "),
 			ReadOnly:   readOnly,
