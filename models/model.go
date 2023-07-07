@@ -202,6 +202,11 @@ var baseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
 	BorderForeground(lipgloss.Color("240"))
 
+var statsStyle = lipgloss.NewStyle().
+	MarginLeft(1).
+	Background(lipgloss.Color("#048ac4")).
+	Foreground(lipgloss.Color("#FAFAFA"))
+
 func (m model) View() string {
 	if m.err != nil {
 		errorStyle := lipgloss.NewStyle().
@@ -221,7 +226,7 @@ func (m model) View() string {
 
 	switch m.currentModel {
 	case MContainerList:
-		return m.containerList.View(commands, m.dockerVersion)
+		return m.containerList.View(commands, &m)
 	case MContainerDetail:
 		return m.containerDetail.View()
 	case MContainerSearch:
@@ -234,7 +239,7 @@ func (m model) View() string {
 		return m.containerStats.View()
 
 	case MImageList:
-		return m.imageList.View(commands, m.dockerVersion)
+		return m.imageList.View(commands, &m)
 	case MImageOptions:
 		return m.imageOptions.View()
 	case MImageDetail:
@@ -243,7 +248,7 @@ func (m model) View() string {
 		return m.imageSearch.View()
 
 	case MNetworkList:
-		return m.networkList.View(commands, m.dockerVersion)
+		return m.networkList.View(commands, &m)
 	case MNetworkSearch:
 		return m.networkSearch.View()
 	case MNetworkDetail:
@@ -252,7 +257,7 @@ func (m model) View() string {
 		return m.networkOptions.View()
 
 	case MVolumeList:
-		return m.volumeList.View(commands, m.dockerVersion)
+		return m.volumeList.View(commands, &m)
 	case MVolumeDetail:
 		return m.volumeDetail.View()
 	case MVolumeSearch:
@@ -286,4 +291,13 @@ func (m *model) setContainerList() {
 	m.err = nil
 	m.containerList = t
 	m.currentModel = MContainerList
+}
+
+func (m *model) getDockerStats() string {
+	return fmt.Sprintf("DockerVersion: %s | Containers: %d | Images: %d | Volumes: %d",
+		m.dockerVersion,
+		len(m.dockerClient.Containers),
+		len(m.dockerClient.Images),
+		len(m.dockerClient.Volumes),
+	)
 }

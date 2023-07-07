@@ -51,8 +51,9 @@ func NewNetworkList(networkList []docker.MyNetwork, query string) NetworkList {
 	return NetworkList{table: t}
 }
 
-func (nl NetworkList) View(commands string, dockerVersion string) string {
-	return baseStyle.Render(nl.table.View()) + helpStyle("\n DockerVersion: "+dockerVersion+" \n"+commands)
+func (nl NetworkList) View(commands string, m *model) string {
+	dockerStats := statsStyle.Render(m.getDockerStats())
+	return baseStyle.Render(nl.table.View()) + helpStyle("\n"+dockerStats+"\n"+commands)
 }
 
 func (cl NetworkList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {

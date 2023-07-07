@@ -56,16 +56,9 @@ func NewContainerList(rows []table.Row) ContainerList {
 	return ContainerList{table: t}
 }
 
-func (cl ContainerList) View(commands string, dockerVersion string) string {
-	// style := lipgloss.NewStyle(
-	s := lipgloss.NewStyle().
-		MarginLeft(1).
-		Background(lipgloss.Color("#0b26d9")).
-		Foreground(lipgloss.Color("#FAFAFA"))
-
-	da := s.Render("DockerVersion: " + dockerVersion + " | Containers: 100 | Images: 20 | Volumes: 10")
-	return baseStyle.Render(cl.table.View()) + helpStyle("\n"+da+"\n"+commands)
-	// return baseStyle.Render(cl.table.View()) + helpStyle("\n DockerVersion: "+dockerVersion+" \n"+commands)
+func (cl ContainerList) View(commands string, m *model) string {
+	dockerStats := statsStyle.Render(m.getDockerStats())
+	return baseStyle.Render(cl.table.View()) + helpStyle("\n"+dockerStats+"\n"+commands)
 }
 
 func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {

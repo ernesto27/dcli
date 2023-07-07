@@ -51,8 +51,9 @@ func NewVolumeList(volumeList []docker.MyVolume, query string) VolumeList {
 	return VolumeList{table: t}
 }
 
-func (vl VolumeList) View(commands string, dockerVersion string) string {
-	return baseStyle.Render(vl.table.View()) + helpStyle("\n DockerVersion: "+dockerVersion+" \n"+commands)
+func (vl VolumeList) View(commands string, m *model) string {
+	dockerStats := statsStyle.Render(m.getDockerStats())
+	return baseStyle.Render(vl.table.View()) + helpStyle("\n"+dockerStats+"\n"+commands)
 }
 
 func (vl VolumeList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {

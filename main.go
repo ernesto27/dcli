@@ -24,6 +24,9 @@ func main() {
 	}
 
 	dockerClient.Events()
+	// set images, volumes for count view
+	dockerClient.ImageList()
+	dockerClient.VolumeList()
 
 	m := models.NewModel(dockerClient, version)
 	if _, err := tea.NewProgram(

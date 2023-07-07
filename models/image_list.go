@@ -50,8 +50,9 @@ func NewImageList(images []docker.MyImage, query string) ImageList {
 	return ImageList{table: t}
 }
 
-func (il ImageList) View(commands string, dockerVersion string) string {
-	return baseStyle.Render(il.table.View()) + helpStyle("\n DockerVersion: "+dockerVersion+" \n"+commands)
+func (il ImageList) View(commands string, m *model) string {
+	dockerStats := statsStyle.Render(m.getDockerStats())
+	return baseStyle.Render(il.table.View()) + helpStyle("\n"+dockerStats+"\n"+commands)
 }
 
 func (il ImageList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
