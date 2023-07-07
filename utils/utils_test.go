@@ -183,3 +183,50 @@ func TestGetDockerHubURL(t *testing.T) {
 		})
 	}
 }
+
+func TestFormatSize(t *testing.T) {
+	type args struct {
+		size int64
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "should format size bytes",
+			args: args{
+				size: 1,
+			},
+			want: "1 bytes",
+		},
+		{
+			name: "should format size KB",
+			args: args{
+				size: 1024,
+			},
+			want: "1.00 KB",
+		},
+		{
+			name: "should format size MB",
+			args: args{
+				size: 1024 * 1024,
+			},
+			want: "1.00 MB",
+		},
+		{
+			name: "should format size GB",
+			args: args{
+				size: 1024 * 1024 * 1024,
+			},
+			want: "1.00 GB",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FormatSize(tt.args.size); got != tt.want {
+				t.Errorf("FormatSize() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
