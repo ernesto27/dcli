@@ -56,8 +56,9 @@ func NewContainerList(rows []table.Row) ContainerList {
 	return ContainerList{table: t}
 }
 
-func (cl ContainerList) View(commands string, dockerVersion string) string {
-	return baseStyle.Render(cl.table.View()) + helpStyle("\n DockerVersion: "+dockerVersion+" \n"+commands)
+func (cl ContainerList) View(commands string, m *model) string {
+	dockerStats := statsStyle.Render(m.getDockerStats())
+	return baseStyle.Render(cl.table.View()) + helpStyle("\n"+dockerStats+"\n"+commands)
 }
 
 func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
