@@ -133,6 +133,9 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 			}
 			m.containerStats = cs
 			m.currentModel = MContainerStats
+		case "ctrl+e":
+			m.currentModel = MContainerExecOptions
+			m.containerExecOptions = NewContainerExecOptions(m.containerList.table.SelectedRow()[1])
 		}
 	}
 

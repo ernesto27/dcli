@@ -30,6 +30,7 @@ const (
 	MContainerLogs
 	MContainerOptions
 	MContainerStats
+	MContainerExecOptions
 
 	MImageList
 	MImageDetail
@@ -48,34 +49,35 @@ const (
 )
 
 type model struct {
-	dockerClient     *docker.Docker
-	containerList    ContainerList
-	containerDetail  ContainerDetail
-	containerSearch  ContainerSearch
-	containerLogs    LogsView
-	containerOptions ContainerOptions
-	containerStats   viewport.Model
-	imageList        ImageList
-	imageDetail      viewport.Model
-	imageSearch      ImageSearch
-	imageOptions     ImageOptions
-	networkList      NetworkList
-	networkSearch    NetworkSearch
-	networkDetail    viewport.Model
-	networkOptions   NetworkOptions
-	volumeList       VolumeList
-	volumeDetail     viewport.Model
-	volumeSearch     VolumeSearch
-	volumeOptions    VolumeOptions
-	ready            bool
-	currentModel     currentModel
-	ContainerID      string
-	dockerVersion    string
-	err              error
-	widthScreen      int
-	heightScreen     int
-	cpuCores         int
-	ram              string
+	dockerClient         *docker.Docker
+	containerList        ContainerList
+	containerDetail      ContainerDetail
+	containerSearch      ContainerSearch
+	containerLogs        LogsView
+	containerOptions     ContainerOptions
+	containerStats       viewport.Model
+	containerExecOptions ContainerExecOptions
+	imageList            ImageList
+	imageDetail          viewport.Model
+	imageSearch          ImageSearch
+	imageOptions         ImageOptions
+	networkList          NetworkList
+	networkSearch        NetworkSearch
+	networkDetail        viewport.Model
+	networkOptions       NetworkOptions
+	volumeList           VolumeList
+	volumeDetail         viewport.Model
+	volumeSearch         VolumeSearch
+	volumeOptions        VolumeOptions
+	ready                bool
+	currentModel         currentModel
+	ContainerID          string
+	dockerVersion        string
+	err                  error
+	widthScreen          int
+	heightScreen         int
+	cpuCores             int
+	ram                  string
 }
 
 func NewModel(dockerClient *docker.Docker, version string, cpuCores int, ram string) *model {
@@ -138,9 +140,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.containerOptions.Cursor = len(m.containerOptions.Choices) - 1
 			}
 
-		case "ctrl+e":
-			return m, attachToContainer(m.containerList.table.SelectedRow()[0])
-
 		case "ctrl+r":
 			m.setContainerList()
 			return m, tea.ClearScreen
@@ -152,6 +151,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.volumeList = NewVolumeList(volumes, "")
 			m.currentModel = MVolumeList
+
+		case "enter":
+			if m.currentModel == MContainerExecOptions {
+				m.currentModel = MContainerList
+				switch m.containerExecOptions.Choices[m.containerExecOptions.Cursor] {
+				case Bash:
+					return m, attachToContainer(m.containerList.table.SelectedRow()[0], Bash)
+				case Sh:
+					return m, attachToContainer(m.containerList.table.SelectedRow()[0], Sh)
+				case Ash:
+					return m, attachToContainer(m.containerList.table.SelectedRow()[0], Ash)
+				}
+			}
 
 		}
 
@@ -183,6 +195,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.containerSearch, _ = m.containerSearch.Update(msg, &m)
 	m.containerOptions, _ = m.containerOptions.Update(msg, &m)
 	m.containerLogs.pager, _ = m.containerLogs.pager.Update(msg)
+	m.containerExecOptions, _ = m.containerExecOptions.Update(msg, &m)
 
 	m.imageList.table, _ = m.imageList.Update(msg, &m)
 	m.imageSearch, _ = m.imageSearch.Update(msg, &m)
@@ -241,6 +254,8 @@ func (m model) View() string {
 		return m.containerOptions.View()
 	case MContainerStats:
 		return m.containerStats.View()
+	case MContainerExecOptions:
+		return m.containerExecOptions.View()
 
 	case MImageList:
 		return m.imageList.View(commands, &m)
@@ -277,8 +292,8 @@ func (m model) View() string {
 
 type attachExited struct{ err error }
 
-func attachToContainer(ID string) tea.Cmd {
-	c := exec.Command("docker", "exec", "-it", ID, "bin/bash")
+func attachToContainer(ID string, command string) tea.Cmd {
+	c := exec.Command("docker", "exec", "-it", ID, command)
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		return attachExited{err}
 	})
