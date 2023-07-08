@@ -66,17 +66,19 @@ func (cl NetworkList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			network, err := m.dockerClient.GetNetworkByName(m.networkList.table.SelectedRow()[1])
-			if err != nil {
-				fmt.Println(err)
-			}
+			if len(m.networkList.table.SelectedRow()) != 0 {
+				network, err := m.dockerClient.GetNetworkByName(m.networkList.table.SelectedRow()[1])
+				if err != nil {
+					fmt.Println(err)
+				}
 
-			nd, err := NewNetworkDetail(network, utils.CreateTable)
-			if err != nil {
-				fmt.Println(err)
+				nd, err := NewNetworkDetail(network, utils.CreateTable)
+				if err != nil {
+					fmt.Println(err)
+				}
+				m.networkDetail = nd
+				m.currentModel = MNetworkDetail
 			}
-			m.networkDetail = nd
-			m.currentModel = MNetworkDetail
 		case "ctrl+f":
 			m.networkSearch.textInput.SetValue("")
 			m.currentModel = MNetworkSearch

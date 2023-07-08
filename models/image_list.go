@@ -65,18 +65,20 @@ func (il ImageList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			img, err := m.dockerClient.GetImageByID(m.imageList.table.SelectedRow()[0])
-			if err != nil {
-				fmt.Println(err)
-			}
+			if len(m.imageList.table.SelectedRow()) != 0 {
+				img, err := m.dockerClient.GetImageByID(m.imageList.table.SelectedRow()[0])
+				if err != nil {
+					fmt.Println(err)
+				}
 
-			imgView, err := NewImageDetail(img, utils.CreateTable)
-			if err != nil {
-				fmt.Println(err)
-			}
+				imgView, err := NewImageDetail(img, utils.CreateTable)
+				if err != nil {
+					fmt.Println(err)
+				}
 
-			m.imageDetail = imgView
-			m.currentModel = MImageDetail
+				m.imageDetail = imgView
+				m.currentModel = MImageDetail
+			}
 		case "ctrl+f":
 			m.imageSearch.textInput.SetValue("")
 			m.currentModel = MImageSearch

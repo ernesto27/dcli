@@ -71,18 +71,20 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			container, err := m.dockerClient.GetContainerByName(m.containerList.table.SelectedRow()[1])
-			if err != nil {
-				fmt.Println(err)
-			}
-			vp, err := NewContainerDetail(container, utils.CreateTable)
-			if err != nil {
-				fmt.Println(err)
-			}
+			if len(m.containerList.table.SelectedRow()) != 0 {
+				container, err := m.dockerClient.GetContainerByName(m.containerList.table.SelectedRow()[1])
+				if err != nil {
+					fmt.Println(err)
+				}
+				vp, err := NewContainerDetail(container, utils.CreateTable)
+				if err != nil {
+					fmt.Println(err)
+				}
 
-			m.containerDetail = vp
-			m.currentModel = MContainerDetail
-			return cl.table, nil
+				m.containerDetail = vp
+				m.currentModel = MContainerDetail
+				return cl.table, nil
+			}
 		case "ctrl+f":
 			m.containerSearch.textInput.SetValue("")
 			m.currentModel = MContainerSearch

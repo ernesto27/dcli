@@ -67,17 +67,20 @@ func (vl VolumeList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			v, err := m.dockerClient.GetVolumeByName(vl.table.SelectedRow()[0])
-			if err != nil {
-				fmt.Println(err)
-			}
+			if len(vl.table.SelectedRow()) != 0 {
 
-			vd, err := NewVolumeDetail(v, utils.CreateTable)
-			if err != nil {
-				fmt.Println(err)
+				v, err := m.dockerClient.GetVolumeByName(vl.table.SelectedRow()[0])
+				if err != nil {
+					fmt.Println(err)
+				}
+
+				vd, err := NewVolumeDetail(v, utils.CreateTable)
+				if err != nil {
+					fmt.Println(err)
+				}
+				m.volumeDetail = vd
+				m.currentModel = MVolumeDetail
 			}
-			m.volumeDetail = vd
-			m.currentModel = MVolumeDetail
 		case "ctrl+f":
 			m.volumeSearch.textInput.SetValue("")
 			m.currentModel = MVolumeSearch
