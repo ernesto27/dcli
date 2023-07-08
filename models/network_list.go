@@ -71,8 +71,15 @@ func (cl NetworkList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 				if err != nil {
 					fmt.Println(err)
 				}
+				// get containers network
+				containers := []docker.MyContainer{}
+				for _, c := range m.dockerClient.Containers {
+					if c.Network.Name == network.Resource.Name {
+						containers = append(containers, c)
+					}
+				}
 
-				nd, err := NewNetworkDetail(network, utils.CreateTable)
+				nd, err := NewNetworkDetail(network, containers, utils.CreateTable)
 				if err != nil {
 					fmt.Println(err)
 				}

@@ -10,8 +10,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func NewNetworkDetail(network docker.MyNetwork, createTable utils.CreateTableFunc) (viewport.Model, error) {
-	content := getContentNetwork(network)
+func NewNetworkDetail(network docker.MyNetwork, containers []docker.MyContainer, createTable utils.CreateTableFunc) (viewport.Model, error) {
+	content := getContentNetwork(network, containers)
 	const width = 120
 
 	vp := viewport.New(width, 30)
@@ -38,7 +38,7 @@ func NewNetworkDetail(network docker.MyNetwork, createTable utils.CreateTableFun
 	return vp, nil
 }
 
-func getContentNetwork(network docker.MyNetwork) string {
+func getContentNetwork(network docker.MyNetwork, containers []docker.MyContainer) string {
 	response := ""
 
 	attachable := "false"
@@ -56,17 +56,16 @@ func getContentNetwork(network docker.MyNetwork) string {
 			{"Gateway", network.Gateway},
 		})
 
-	if len(network.Containers) > 0 {
+	if len(containers) > 0 {
 		columns := []string{"Name", "IPv4 Address"}
-
 		rows := [][]string{}
-		for _, container := range network.Containers {
-			rows = append(rows, []string{container.Name, container.Network.IPAddress})
+
+		for _, c := range containers {
+			rows = append(rows, []string{c.Name, c.Network.IPAddress})
 		}
 
 		response += "\n\n"
 		response += utils.CreateTable("# Containers", columns, rows)
-
 	}
 
 	return response
