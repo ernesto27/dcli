@@ -14,11 +14,11 @@ https://github.com/charmbracelet/bubbletea
 ## Installation
 Go to release page and download the binary for your OS.
 
-https://github.com/ernesto27/container-nice-cli/releases
+[https://github.com/ernesto27/container-nice-cli/releases](https://github.com/ernesto27/dcli/releases)
 
 Also if you have Golang installed you can install it with:
 ```
-go get github.com/ernesto27/container-nice-cli@latest
+go install github.com/ernesto27/dcli@latest
 ```
 
 
