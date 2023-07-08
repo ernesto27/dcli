@@ -16,14 +16,18 @@ import (
 
 func main() {
 	ctx := context.Background()
+
+	msgError := "Error connecting to docker daemon, please check if docker is installed and running..."
 	dockerClient, err := docker.New(ctx)
 	if err != nil {
-		panic(err)
+		fmt.Println(msgError)
+		os.Exit(1)
 	}
 
 	version, err := dockerClient.ServerVersion()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(msgError)
+		os.Exit(1)
 	}
 
 	dockerClient.Events()
