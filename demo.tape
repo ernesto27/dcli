@@ -63,115 +63,113 @@ Set Height 1000
 Type go run main.go
 Enter
 
-Sleep 5s
-
+# container detail
+Sleep 4s
 Enter
-
-Sleep 5s
-
+Sleep 4s
 Down 10
-
-Sleep 5s
-
+Sleep 4s
 Escape
-
-Sleep 5s
+Sleep 4s
 
 # search 
 Ctrl+f
-Sleep 5s
+Sleep 4s
 Type "mysq"
-Sleep 5s
+Sleep 4s
 Enter 
-Sleep 5s
+Sleep 4s
 Enter
-Sleep 5s
+Sleep 4s
 Escape
-Sleep 5s
+Sleep 4s
 
-#logs 
+# logs 
 Ctrl+l 
-Sleep 5s
+Sleep 4s
 Down 40
-Sleep 5s
+Sleep 4s
 Escape
-Sleep 5s
+Sleep 4s
 
 
-#options 
+#  options 
 Ctrl+o
-Sleep 5s
+Sleep 4s
 Escape
-Sleep 5s
+Sleep 4s
 
 #Exec container 
 Ctrl+e 
 Type ls
 Enter
-Sleep 5s 
+Sleep 4s 
 Type exit 
 Enter
-Sleep 5s
+Sleep 4s
 
 #image list
 Ctrl+b 
-Sleep 5s 
+Sleep 4s 
 Enter 
-Sleep 5s 
+Sleep 4s 
 Escape 
-Sleep 5s 
+Sleep 4s 
 
 
 #image search 
 Ctrl+f 
-Sleep 5s
+Sleep 4s
 Type nginx 
-Sleep 5s
+Sleep 4s
 Enter 
-Sleep 5s 
+Sleep 4s 
 Enter 
-Sleep 5s 
+Sleep 4s 
 
 # image option 
 Ctrl+o 
-Sleep 5s 
+Sleep 4s 
 Escape
-Sleep 5s
+Sleep 4s
+Escape
 
 #network list
 Ctrl+n
-Sleep 5s
+Sleep 4s
 Enter
-Sleep 5s
+Sleep 4s
 Escape
-Sleep 5s
+Sleep 4s
 
 #network search
 Ctrl+f 
-Sleep 5s
+Sleep 4s
 Type bridge 
-Sleep 5s
+Sleep 4s
 Enter 
-Sleep 5s
+Sleep 4s
 
 #network options
 Ctrl+o
-Sleep 5s
+Sleep 4s
 Escape
-Sleep 5s
+Sleep 4s
 Escape 
-Sleep 5s
+Sleep 4s
 
 #volume list 
 Ctrl+v
-Sleep 5s
+Sleep 4s
 Enter
-Sleep 5s
+Sleep 4s
 Escape
-Sleep 5s
+Sleep 4s
+
+# volume option
+Ctrl+o
+Sleep 4s
+Escape
 
 
-
-
-
-Sleep 5s
+Sleep 4s
