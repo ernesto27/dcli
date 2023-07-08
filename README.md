@@ -8,7 +8,7 @@ It uses the great lib bubbletea for create a nice UI in the terminal
 https://github.com/charmbracelet/bubbletea
 
 ## Demo
-![demo](https://github.com/ernesto27/dcli/assets/1366157/cdb05e5d-528d-431a-a240-0ac86bdf04d7)
+![demo](https://github.com/ernesto27/dcli/assets/1366157/7ca15b20-da6f-4541-9691-46d0a627ffef)
 
 
 ## Installation
