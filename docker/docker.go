@@ -75,6 +75,10 @@ type MyVolume struct {
 	Containers []MyContainer
 }
 
+type MyStack struct {
+	MyNetwork
+}
+
 func (i *MyImage) GetFormatTimestamp() string {
 	if i.Summary.Created == 0 {
 		return ""
@@ -333,7 +337,9 @@ func (d *Docker) ContainerLogs(containerId string) (string, error) {
 
 	logs := ""
 	for _, l := range response {
-		logs += l[10:] + "\n"
+		if len(l) > 10 {
+			logs += l[10:] + "\n"
+		}
 	}
 
 	return logs, nil
@@ -432,16 +438,9 @@ func (d *Docker) NetworkList() ([]MyNetwork, error) {
 		}
 
 		containers := []MyContainer{}
-		for containerID := range network.Containers {
-			container, _, err := d.cli.ContainerInspectWithRaw(context.Background(), containerID, true)
-			if err == nil {
-				n := MyNetwork{
-					IPAddress: d.getContainerIP(container),
-				}
-				containers = append(containers, MyContainer{
-					Name:    d.getContainerName([]string{container.Name}),
-					Network: n,
-				})
+		for _, c := range d.Containers {
+			if c.Network.Name == network.Name {
+				containers = append(containers, c)
 			}
 		}
 
@@ -525,6 +524,23 @@ func (d *Docker) GetVolumeByName(name string) (MyVolume, error) {
 
 func (d *Docker) VolumeRemove(volumeID string) error {
 	return d.cli.VolumeRemove(d.ctx, volumeID, false)
+}
+
+func (d *Docker) StackList() ([]MyStack, error) {
+	stacks := []MyStack{}
+	networks, err := d.NetworkList()
+	if err != nil {
+		return stacks, err
+	}
+
+	for _, n := range networks {
+		if n.Resource.Labels["com.docker.compose.project"] != "" {
+			stacks = append(stacks, MyStack{n})
+		}
+	}
+
+	return stacks, nil
+
 }
 
 func (d *Docker) Events() {

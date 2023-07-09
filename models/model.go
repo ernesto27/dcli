@@ -46,6 +46,8 @@ const (
 	MVolumeDetail
 	MVolumeSearch
 	MVolumeOptions
+
+	MStackList
 )
 
 type model struct {
@@ -69,6 +71,7 @@ type model struct {
 	volumeDetail         viewport.Model
 	volumeSearch         VolumeSearch
 	volumeOptions        VolumeOptions
+	stackList            StackList
 	ready                bool
 	currentModel         currentModel
 	ContainerID          string
@@ -164,6 +167,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, attachToContainer(m.containerList.table.SelectedRow()[0], Ash)
 				}
 			}
+		case "ctrl+p":
+			stacks, err := m.dockerClient.StackList()
+			if err != nil {
+				fmt.Println(stacks)
+			}
+			m.stackList = NewStackList(stacks, "")
+			m.currentModel = MStackList
 
 		}
 
@@ -210,6 +220,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.volumeDetail, _ = m.volumeDetail.Update(msg)
 	m.volumeSearch, _ = m.volumeSearch.Update(msg, &m)
 	m.volumeOptions, _ = m.volumeOptions.Update(msg, &m)
+
+	m.stackList.table, _ = m.stackList.Update(msg, &m)
 
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -283,6 +295,9 @@ func (m model) View() string {
 		return m.volumeSearch.View()
 	case MVolumeOptions:
 		return m.volumeOptions.View()
+
+	case MStackList:
+		return m.stackList.View(commands, &m)
 
 	default:
 		return ""
