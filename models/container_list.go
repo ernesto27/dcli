@@ -21,6 +21,7 @@ const (
 
 type ContainerList struct {
 	table table.Model
+	title string
 }
 
 func NewContainerList(rows []table.Row) ContainerList {
@@ -53,12 +54,14 @@ func NewContainerList(rows []table.Row) ContainerList {
 		Bold(false)
 	t.SetStyles(s)
 
-	return ContainerList{table: t}
+	return ContainerList{
+		table: t,
+		title: "CONTAINERS",
+	}
 }
 
 func (cl ContainerList) View(commands string, m *model) string {
-	dockerStats := statsStyle.Render(m.getDockerStats())
-	return baseStyle.Render(cl.table.View()) + helpStyle("\n"+dockerStats+"\n"+commands)
+	return m.renderTable(cl.title, cl.table.View(), commands)
 }
 
 func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {

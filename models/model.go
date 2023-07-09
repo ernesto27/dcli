@@ -236,6 +236,16 @@ var statsStyle = lipgloss.NewStyle().
 	Background(lipgloss.Color("#021f2b")).
 	Foreground(lipgloss.Color("#FAFAFA"))
 
+var titleTableStyle = lipgloss.NewStyle().
+	Background(lipgloss.Color("#740ceb")).
+	Foreground(lipgloss.Color("#FFF")).
+	MarginLeft(1).
+	MarginTop(1).
+	Padding(0, 1).
+	Italic(true).
+	Bold(true).
+	Render
+
 func (m model) View() string {
 	if m.err != nil {
 		errorStyle := lipgloss.NewStyle().
@@ -336,4 +346,9 @@ func (m *model) getDockerStats() string {
 		m.cpuCores,
 		m.ram,
 	)
+}
+
+func (m *model) renderTable(title string, table string, commands string) string {
+	dockerStats := statsStyle.Render(m.getDockerStats())
+	return titleTableStyle(title) + "\n" + baseStyle.Render(table) + helpStyle("\n"+dockerStats+"\n"+commands)
 }

@@ -540,7 +540,6 @@ func (d *Docker) StackList() ([]MyStack, error) {
 	}
 
 	return stacks, nil
-
 }
 
 func (d *Docker) Events() {

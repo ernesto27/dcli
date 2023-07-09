@@ -15,6 +15,7 @@ import (
 
 type NetworkList struct {
 	table table.Model
+	title string
 }
 
 func NewNetworkList(networkList []docker.MyNetwork, query string) NetworkList {
@@ -48,12 +49,14 @@ func NewNetworkList(networkList []docker.MyNetwork, query string) NetworkList {
 		Bold(false)
 	t.SetStyles(s)
 
-	return NetworkList{table: t}
+	return NetworkList{
+		table: t,
+		title: "NETWORKS",
+	}
 }
 
 func (nl NetworkList) View(commands string, m *model) string {
-	dockerStats := statsStyle.Render(m.getDockerStats())
-	return baseStyle.Render(nl.table.View()) + helpStyle("\n"+dockerStats+"\n"+commands)
+	return m.renderTable(nl.title, nl.table.View(), commands)
 }
 
 func (cl NetworkList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {

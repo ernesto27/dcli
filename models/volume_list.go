@@ -15,6 +15,7 @@ import (
 
 type VolumeList struct {
 	table table.Model
+	title string
 }
 
 func NewVolumeList(volumeList []docker.MyVolume, query string) VolumeList {
@@ -48,12 +49,14 @@ func NewVolumeList(volumeList []docker.MyVolume, query string) VolumeList {
 		Bold(false)
 	t.SetStyles(s)
 
-	return VolumeList{table: t}
+	return VolumeList{
+		table: t,
+		title: "VOLUMES",
+	}
 }
 
 func (vl VolumeList) View(commands string, m *model) string {
-	dockerStats := statsStyle.Render(m.getDockerStats())
-	return baseStyle.Render(vl.table.View()) + helpStyle("\n"+dockerStats+"\n"+commands)
+	return m.renderTable(vl.title, vl.table.View(), commands)
 }
 
 func (vl VolumeList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {

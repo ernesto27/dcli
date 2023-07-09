@@ -12,6 +12,7 @@ import (
 
 type StackList struct {
 	table table.Model
+	title string
 }
 
 func NewStackList(stack []docker.MyStack, query string) StackList {
@@ -42,12 +43,14 @@ func NewStackList(stack []docker.MyStack, query string) StackList {
 		Bold(false)
 	t.SetStyles(s)
 
-	return StackList{table: t}
+	return StackList{
+		table: t,
+		title: "STACKS DOCKER COMPOSE",
+	}
 }
 
 func (sl StackList) View(commands string, m *model) string {
-	dockerStats := statsStyle.Render(m.getDockerStats())
-	return baseStyle.Render(sl.table.View()) + helpStyle("\n"+dockerStats+"\n"+commands)
+	return m.renderTable(sl.title, sl.table.View(), commands)
 }
 
 func (sl StackList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {

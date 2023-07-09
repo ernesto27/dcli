@@ -15,6 +15,7 @@ import (
 
 type ImageList struct {
 	table table.Model
+	title string
 }
 
 func NewImageList(images []docker.MyImage, query string) ImageList {
@@ -47,12 +48,14 @@ func NewImageList(images []docker.MyImage, query string) ImageList {
 		Bold(false)
 	t.SetStyles(s)
 
-	return ImageList{table: t}
+	return ImageList{
+		table: t,
+		title: "IMAGES",
+	}
 }
 
 func (il ImageList) View(commands string, m *model) string {
-	dockerStats := statsStyle.Render(m.getDockerStats())
-	return baseStyle.Render(il.table.View()) + helpStyle("\n"+dockerStats+"\n"+commands)
+	return m.renderTable(il.title, il.table.View(), commands)
 }
 
 func (il ImageList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
