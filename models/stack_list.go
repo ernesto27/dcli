@@ -1,9 +1,11 @@
 package models
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ernesto27/dcli/docker"
+	"github.com/ernesto27/dcli/utils"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -59,6 +61,20 @@ func (sl StackList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 	}
 
 	sl.table, _ = sl.table.Update(msg)
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			stack, err := m.dockerClient.GetStackByName(sl.table.SelectedRow()[0])
+			if err != nil {
+				fmt.Println(err)
+			}
+			m.stackDetail, _ = NewStackDetail(stack, utils.CreateTable)
+			m.currentModel = MStackDetail
+		}
+	}
+
 	return sl.table, nil
 }
 

@@ -48,6 +48,7 @@ const (
 	MVolumeOptions
 
 	MStackList
+	MStackDetail
 )
 
 type model struct {
@@ -72,6 +73,7 @@ type model struct {
 	volumeSearch         VolumeSearch
 	volumeOptions        VolumeOptions
 	stackList            StackList
+	stackDetail          viewport.Model
 	ready                bool
 	currentModel         currentModel
 	ContainerID          string
@@ -126,6 +128,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if m.currentModel == MVolumeDetail || m.currentModel == MVolumeSearch || m.currentModel == MVolumeOptions {
 				m.currentModel = MVolumeList
+				return m, tea.ClearScreen
+			}
+
+			if m.currentModel == MStackDetail {
+				m.currentModel = MStackList
 				return m, tea.ClearScreen
 			}
 
@@ -222,6 +229,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.volumeOptions, _ = m.volumeOptions.Update(msg, &m)
 
 	m.stackList.table, _ = m.stackList.Update(msg, &m)
+	m.stackDetail, _ = m.stackDetail.Update(msg)
 
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
@@ -308,6 +316,8 @@ func (m model) View() string {
 
 	case MStackList:
 		return m.stackList.View(commands, &m)
+	case MStackDetail:
+		return m.stackDetail.View()
 
 	default:
 		return ""

@@ -25,6 +25,7 @@ type Docker struct {
 	Images     []MyImage
 	Networks   []MyNetwork
 	Volumes    []MyVolume
+	Stacks     []MyStack
 }
 
 type MyNetwork struct {
@@ -539,7 +540,19 @@ func (d *Docker) StackList() ([]MyStack, error) {
 		}
 	}
 
+	d.Stacks = stacks
 	return stacks, nil
+}
+
+func (d *Docker) GetStackByName(name string) (MyStack, error) {
+
+	for _, s := range d.Stacks {
+		if s.Resource.Name == name {
+			return s, nil
+		}
+	}
+
+	return MyStack{}, fmt.Errorf("stack %s not found", name)
 }
 
 func (d *Docker) Events() {
