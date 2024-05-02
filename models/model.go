@@ -348,10 +348,12 @@ func (m *model) setContainerList() {
 }
 
 func (m *model) getDockerStats() string {
-	return fmt.Sprintf("\U0001F433 DockerVersion: %s | Containers: %d | Images: %d | Volumes: %d  \U0001F5A5  CPU: %d | Memory: %s ",
+	return fmt.Sprintf("\U0001F433 DockerVersion: %s | Containers: %d (%s)| Images: %d (%s) | Volumes: %d  \U0001F5A5  CPU: %d | Memory: %s ",
 		m.dockerVersion,
 		len(m.dockerClient.Containers),
+		m.dockerClient.GetAllContainersSize(),
 		len(m.dockerClient.Images),
+		m.dockerClient.GetAllImagesSize(),
 		len(m.dockerClient.Volumes),
 		m.cpuCores,
 		m.ram,

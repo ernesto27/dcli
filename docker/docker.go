@@ -38,22 +38,23 @@ type MyNetwork struct {
 }
 
 type MyContainer struct {
-	ID         string
-	IDShort    string
-	Name       string
-	NameShort  string
-	Image      string
-	ImageShort string
-	State      string
-	Status     string
-	Ports      []types.Port
-	Size       string
-	Command    string
-	Env        []string
-	ReadOnly   bool
-	MountedAt  string
-	Network    MyNetwork
-	Mounts     []types.MountPoint
+	ID           string
+	IDShort      string
+	Name         string
+	NameShort    string
+	Image        string
+	ImageShort   string
+	State        string
+	Status       string
+	Ports        []types.Port
+	Size         string
+	SizeOriginal int64
+	Command      string
+	Env          []string
+	ReadOnly     bool
+	MountedAt    string
+	Network      MyNetwork
+	Mounts       []types.MountPoint
 }
 
 type MyContainerStats struct {
@@ -172,20 +173,21 @@ func (d *Docker) ContainerList() ([]MyContainer, error) {
 		}
 
 		mc = append(mc, MyContainer{
-			ID:         c.ID,
-			IDShort:    utils.TrimValue(c.ID, 10),
-			Name:       name,
-			NameShort:  utils.TrimValue(name, 20),
-			Image:      c.Image,
-			ImageShort: utils.TrimValue(c.Image, 20),
-			State:      c.State,
-			Status:     c.Status,
-			Ports:      c.Ports,
-			Size:       utils.FormatSize(*cJSON.SizeRootFs),
-			Env:        cJSON.Config.Env,
-			Command:    strings.Join(cJSON.Config.Entrypoint, " ") + " " + strings.Join(cJSON.Config.Cmd, " "),
-			ReadOnly:   readOnly,
-			MountedAt:  mountedAt,
+			ID:           c.ID,
+			IDShort:      utils.TrimValue(c.ID, 10),
+			Name:         name,
+			NameShort:    utils.TrimValue(name, 20),
+			Image:        c.Image,
+			ImageShort:   utils.TrimValue(c.Image, 20),
+			State:        c.State,
+			Status:       c.Status,
+			Ports:        c.Ports,
+			Size:         utils.FormatSize(*cJSON.SizeRootFs),
+			SizeOriginal: *cJSON.SizeRootFs,
+			Env:          cJSON.Config.Env,
+			Command:      strings.Join(cJSON.Config.Entrypoint, " ") + " " + strings.Join(cJSON.Config.Cmd, " "),
+			ReadOnly:     readOnly,
+			MountedAt:    mountedAt,
 			Network: MyNetwork{
 				Name:      networkMode,
 				IPAddress: ipAddress,
@@ -568,4 +570,23 @@ func (d *Docker) Events() {
 			}
 		}
 	}()
+}
+
+func (d *Docker) GetAllImagesSize() string {
+	var size int64
+	for _, image := range d.Images {
+		size += image.Summary.Size
+	}
+
+	return utils.FormatSize(size)
+}
+
+func (d *Docker) GetAllContainersSize() string {
+	var size int64
+
+	for _, container := range d.Containers {
+		size += container.SizeOriginal
+	}
+
+	return utils.FormatSize(size)
 }
