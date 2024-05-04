@@ -13,6 +13,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+var orderDescImage bool
+
 type ImageList struct {
 	table table.Model
 	title string
@@ -89,7 +91,10 @@ func (il ImageList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 			ov := NewImageOptions(m.imageList.table.SelectedRow()[1])
 			m.imageOptions = ov
 			m.currentModel = MImageOptions
-
+		case "ctrl+a":
+			orderDescImage = !orderDescImage
+			images := m.dockerClient.GetImagesOrderBySize(orderDescImage)
+			il.table.SetRows(GetImageRows(images, ""))
 		}
 	}
 

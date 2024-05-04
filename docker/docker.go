@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -589,4 +590,30 @@ func (d *Docker) GetAllContainersSize() string {
 	}
 
 	return utils.FormatSize(size)
+}
+
+func (d *Docker) GetImagesOrderBySize(desc bool) []MyImage {
+	sortedImages := make([]MyImage, len(d.Images))
+	copy(sortedImages, d.Images)
+	sort.Slice(sortedImages, func(i, j int) bool {
+		if desc {
+			return sortedImages[i].Summary.Size > sortedImages[j].Summary.Size
+		} else {
+			return sortedImages[i].Summary.Size < sortedImages[j].Summary.Size
+		}
+	})
+	return sortedImages
+}
+
+func (d *Docker) GetContainersOrderBySize(desc bool) []MyContainer {
+	sortedContainers := make([]MyContainer, len(d.Containers))
+	copy(sortedContainers, d.Containers)
+	sort.Slice(sortedContainers, func(i, j int) bool {
+		if desc {
+			return sortedContainers[i].SizeOriginal > sortedContainers[j].SizeOriginal
+		} else {
+			return sortedContainers[i].SizeOriginal < sortedContainers[j].SizeOriginal
+		}
+	})
+	return sortedContainers
 }

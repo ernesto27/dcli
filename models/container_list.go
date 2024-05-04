@@ -24,6 +24,8 @@ type ContainerList struct {
 	title string
 }
 
+var orderDescContainer bool
+
 func NewContainerList(rows []table.Row) ContainerList {
 	columns := []table.Column{
 		{Title: "ID", Width: 20},
@@ -139,6 +141,11 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 		case "ctrl+e":
 			m.currentModel = MContainerExecOptions
 			m.containerExecOptions = NewContainerExecOptions(m.containerList.table.SelectedRow()[1])
+		case "ctrl+a":
+			orderDescContainer = !orderDescContainer
+			containers := m.dockerClient.GetContainersOrderBySize(orderDescContainer)
+			cl.table.SetRows(GetContainerRows(containers, ""))
+
 		}
 	}
 
