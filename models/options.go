@@ -7,20 +7,22 @@ import (
 )
 
 type Options struct {
-	Cursor  int
-	Choice  string
-	Choices []string
-	Text1   string
-	Text2   string
+	Cursor       int
+	Choice       string
+	Choices      []string
+	Text1        string
+	Text2        string
+	MessageError string
 }
 
 const (
-	Stop    = "Stop"
-	Start   = "Start"
-	Remove  = "Remove"
-	Restart = "Restart"
-	Pause   = "Pause"
-	Unpause = "Unpause"
+	Stop        = "Stop"
+	Start       = "Start"
+	Remove      = "Remove"
+	ForceRemove = "Force Remove"
+	Restart     = "Restart"
+	Pause       = "Pause"
+	Unpause     = "Unpause"
 )
 
 func (o Options) View(title string) string {
@@ -46,5 +48,5 @@ func (o Options) View(title string) string {
 		s.WriteString("\n")
 	}
 	s.WriteString("\n(press Esc to go back)\n")
-	return style.Render(title) + s.String()
+	return style.Render(title) + s.String() + "\n" + o.MessageError
 }

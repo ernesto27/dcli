@@ -293,10 +293,10 @@ func (d *Docker) GetImageByID(ID string) (MyImage, error) {
 	return MyImage{}, fmt.Errorf("image %s not found", ID)
 }
 
-func (d *Docker) ImageRemove(imageID string) error {
+func (d *Docker) ImageRemove(imageID string, force bool) error {
 	_, err := d.cli.ImageRemove(d.ctx, imageID, types.ImageRemoveOptions{
 		PruneChildren: true,
-		Force:         false,
+		Force:         force,
 	})
 	return err
 }

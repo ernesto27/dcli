@@ -31,6 +31,10 @@ func (o ContainerOptions) View() string {
 }
 
 func (o ContainerOptions) Update(msg tea.Msg, m *model) (ContainerOptions, tea.Cmd) {
+	if m.currentModel != MContainerOptions {
+		return o, nil
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {

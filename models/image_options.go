@@ -11,7 +11,7 @@ type ImageOptions struct {
 }
 
 func NewImageOptions(image string) ImageOptions {
-	choices := []string{Remove}
+	choices := []string{Remove, ForceRemove}
 
 	return ImageOptions{
 		Options{
@@ -40,22 +40,36 @@ func (o ImageOptions) Update(msg tea.Msg, m *model) (ImageOptions, tea.Cmd) {
 			errAction := false
 			option := m.imageOptions.Choices[m.imageOptions.Cursor]
 
-			if option == Remove {
-				err := m.dockerClient.ImageRemove(m.imageList.table.SelectedRow()[1])
-				if err != nil {
-					fmt.Println(err)
-					errAction = true
-				}
+			force := false
+			if option == ForceRemove {
+				force = true
+			}
+
+			err := m.dockerClient.ImageRemove(m.imageList.table.SelectedRow()[1], force)
+			if err != nil {
+				o.MessageError = err.Error()
+				errAction = true
 			}
 
 			if !errAction {
 				images, err := m.dockerClient.ImageList()
 				if err != nil {
-					fmt.Println(err)
+					o.MessageError = err.Error()
 				}
 
 				m.imageList = NewImageList(images, "")
 				m.currentModel = MImageList
+			}
+		case "down":
+			o.Cursor++
+			if o.Cursor >= len(o.Choices) {
+				o.Cursor = 0
+			}
+
+		case "up":
+			o.Cursor--
+			if o.Cursor < 0 {
+				o.Cursor = len(o.Choices) - 1
 			}
 
 		}
