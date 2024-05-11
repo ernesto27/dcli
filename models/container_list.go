@@ -31,7 +31,8 @@ func NewContainerList(rows []table.Row) ContainerList {
 		{Title: "ID", Width: 20},
 		{Title: "Container", Width: 30},
 		{Title: "Image", Width: 30},
-		{Title: "Port", Width: 20},
+		{Title: "Port", Width: 6},
+		{Title: "Url", Width: 20},
 		{Title: "Size", Width: 20},
 		{Title: "Status", Width: 20},
 	}
@@ -171,9 +172,11 @@ func GetContainerRows(containerList []docker.MyContainer, query string) []table.
 	})
 
 	for _, c := range filtered {
-		port := ""
+		var port string
+		var url string
 		if len(c.Ports) > 0 {
-			port = fmt.Sprintf("http://%s:%d", "localhost", c.Ports[0].PublicPort)
+			url = fmt.Sprintf("http://%s:%d", "localhost", c.Ports[0].PublicPort)
+			port = fmt.Sprintf("%d", c.Ports[0].PublicPort)
 		}
 
 		up := "\u2191"
@@ -187,7 +190,7 @@ func GetContainerRows(containerList []docker.MyContainer, query string) []table.
 			currState = greenUpArrow + " " + c.State
 		}
 
-		item := []string{c.ID, c.Name, c.Image, port, c.Size, currState}
+		item := []string{c.ID, c.Name, c.Image, port, url, c.Size, currState}
 		rowsItems = append(rowsItems, item)
 	}
 
