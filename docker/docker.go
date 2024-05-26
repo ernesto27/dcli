@@ -246,6 +246,10 @@ func (d *Docker) ContainerUnpause(containerID string) error {
 	return d.cli.ContainerUnpause(d.ctx, containerID)
 }
 
+func (d *Docker) GetContainerTop(containerID string) (container.ContainerTopOKBody, error) {
+	return d.cli.ContainerTop(d.ctx, containerID, []string{""})
+}
+
 func (d *Docker) ImageList() ([]MyImage, error) {
 	images, err := d.cli.ImageList(d.ctx, types.ImageListOptions{})
 	myImages := []MyImage{}

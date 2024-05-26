@@ -146,7 +146,14 @@ func (cl ContainerList) Update(msg tea.Msg, m *model) (table.Model, tea.Cmd) {
 			orderDescContainer = !orderDescContainer
 			containers := m.dockerClient.GetContainersOrderBySize(orderDescContainer)
 			cl.table.SetRows(GetContainerRows(containers, ""))
+		case "ctrl+t":
+			top, err := m.dockerClient.GetContainerTop(m.containerList.table.SelectedRow()[0])
+			if err != nil {
+				fmt.Println(err)
+			}
 
+			m.containerTop = NewContainerTop(top, m.containerList.table.SelectedRow()[1])
+			m.currentModel = MContainerTop
 		}
 	}
 

@@ -13,8 +13,8 @@ import (
 
 const commands = `
  GENERAL ↑/↓: Navigate • ctrl+c: Exit • ctrl+r: refresh • esc: Back 
- CONTAINERS ctrl+f: Search • ctrl+l: Logs • ctrl+o: Options • ctrl+e: Attach cmd • ctrl+s: Stats
- IMAGES ctrl+b: List • ctrl+f: Search • ctrl+o: Options
+ CONTAINERS ctrl+f: Search • ctrl+l: Logs • ctrl+o: Options • ctrl+e: Attach cmd • ctrl+s: Stats • ctrl+a: Order by size
+ IMAGES ctrl+b: List • ctrl+f: Search • ctrl+o: Options • ctrl+a: Order by size
  NETWORKS ctrl+n: List • ctrl+f: Search  • ctrl+o: Options
  VOLUMES ctrl+v: List • ctrl+f: Search  • ctrl+o: Options
    `
@@ -31,6 +31,7 @@ const (
 	MContainerOptions
 	MContainerStats
 	MContainerExecOptions
+	MContainerTop
 
 	MImageList
 	MImageDetail
@@ -60,6 +61,7 @@ type model struct {
 	containerOptions     ContainerOptions
 	containerStats       viewport.Model
 	containerExecOptions ContainerExecOptions
+	containerTop         ContainerTop
 	imageList            ImageList
 	imageDetail          viewport.Model
 	imageSearch          ImageSearch
@@ -213,6 +215,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.containerOptions, _ = m.containerOptions.Update(msg, &m)
 	m.containerLogs.pager, _ = m.containerLogs.pager.Update(msg)
 	m.containerExecOptions, _ = m.containerExecOptions.Update(msg, &m)
+	m.containerTop, _ = m.containerTop.Update(msg, &m)
 
 	m.imageList.table, _ = m.imageList.Update(msg, &m)
 	m.imageSearch, _ = m.imageSearch.Update(msg, &m)
@@ -286,6 +289,8 @@ func (m model) View() string {
 		return m.containerStats.View()
 	case MContainerExecOptions:
 		return m.containerExecOptions.View()
+	case MContainerTop:
+		return m.containerTop.View()
 
 	case MImageList:
 		return m.imageList.View(commands, &m)
