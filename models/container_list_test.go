@@ -38,7 +38,7 @@ func TestGetContainerRows(t *testing.T) {
 				},
 				query: "",
 			},
-			want: []table.Row{{"1234567890", "test", "test", "", "", "\033[32m\u2191\033[0m " + running}, {"12345678902", "test2", "test2", "", "", "\033[31m\u2193\033[0m " + exited}},
+			want: []table.Row{{"1234567890", "test", "test", "", "", "", "\033[32m\u2191\033[0m " + running}, {"12345678902", "test2", "test2", "", "", "", "\033[31m\u2193\033[0m " + exited}},
 		},
 		{
 			name: "should get filtered results when search by name",
@@ -59,7 +59,7 @@ func TestGetContainerRows(t *testing.T) {
 				},
 				query: "nginx",
 			},
-			want: []table.Row{{"1234567890", "nginx", "test", "", "", "\033[32m\u2191\033[0m " + running}},
+			want: []table.Row{{"1234567890", "nginx", "test", "", "", "", "\033[32m\u2191\033[0m " + running}},
 		},
 		{
 			name: "should get filtered results when search by image",
@@ -80,7 +80,7 @@ func TestGetContainerRows(t *testing.T) {
 				},
 				query: "mysq",
 			},
-			want: []table.Row{{"1234567890", "test", "mysql", "", "", "\033[32m\u2191\033[0m " + running}},
+			want: []table.Row{{"1234567890", "test", "mysql", "", "", "", "\033[32m\u2191\033[0m " + running}},
 		},
 	}
 

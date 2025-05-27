@@ -1,6 +1,6 @@
 module github.com/ernesto27/dcli
 
-go 1.20
+go 1.24.3
 
 require (
 	github.com/charmbracelet/bubbles v0.16.1
